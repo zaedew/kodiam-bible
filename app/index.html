@@ -166,6 +166,16 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(-
 .install .btn[hidden]{display:none}
 .install .later{background:none;border:0;color:var(--soft);font-size:14px;padding:10px 0}
 
+.daybar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);
+  margin:-20px -20px 18px;padding:12px 20px 12px;border-bottom:1px solid var(--line)}
+.daybar .top{margin:0 0 4px}
+.daybar .back{padding:4px 10px 4px 0}
+.daybar .dayc{padding:5px 0;border-radius:12px}
+.daybar .dayc b{font-size:15px}
+.dayc.today b{color:var(--blue)}
+.dayc.read.today b{color:var(--deep)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
+
 /* 기록 화면 */
 .calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .calhead h2{margin:0;font-size:20px}
@@ -248,7 +258,10 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(-
 
   <!-- 하루 화면 -->
   <section class="view" id="day" aria-label="오늘 분량">
-    <div class="top"><button class="back" data-go="home">‹ 처음으로</button></div>
+    <div class="daybar">
+      <div class="top"><button class="back" data-go="home">‹ 처음으로</button></div>
+      <div class="strip" id="dayStrip" aria-label="이번 주 날짜"></div>
+    </div>
     <div id="dayBody"></div>
   </section>
 
@@ -378,19 +391,20 @@ function renderToday(){
     ${!done&&hasMissed()?`<p class="together">지난 날은 그대로 두셔도 괜찮아요. 오늘 본문부터 함께 읽어요.</p>`:""}`;
 }
 function hasMissed(){const k=key(today);return READING.some(r=>r<k&&!read.has(r))}
-function renderStrip(){
-  const s=document.getElementById("strip"),start=new Date(today);start.setDate(today.getDate()-today.getDay());
-  let h="";
+function stripHTML(base,sel){
+  const start=new Date(base);start.setDate(base.getDate()-base.getDay());const tk=key(today);let h="";
   for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const k=key(d);
-    const cls=["dayc",d.getDay()===0?"rest":"",read.has(k)?"read":"",k===key(today)?"now":""].join(" ");
-    h+=`<button class="${cls}" data-open="${k}" aria-label="${fmt(d)}${read.has(k)?", 읽음":""}">${WD[d.getDay()]}<b>${d.getDate()}</b><span class="dot"></span></button>`}
-  s.innerHTML=h;
+    const cls=["dayc",d.getDay()===0?"rest":"",read.has(k)?"read":"",k===sel?"now":"",k===tk?"today":""].join(" ");
+    h+=`<button class="${cls}" data-open="${k}" ${k===sel?'aria-current="date"':""} aria-label="${fmt(d)}${k===tk?", 오늘":""}${read.has(k)?", 읽음":""}">${WD[d.getDay()]}<b>${d.getDate()}</b><span class="dot"></span></button>`}
+  return h;
 }
+function renderStrip(){document.getElementById("strip").innerHTML=stripHTML(today,key(today))}
 function renderHome(){greet();progress();renderToday();renderStrip()}
 
 /* ---------- 하루 화면 ---------- */
 function openDay(k){
   const d=fromKey(k),p=PLAN[k],body=document.getElementById("dayBody");
+  document.getElementById("dayStrip").innerHTML=stripHTML(d,k);
   if(!p&&d.getDay()!==0){
     body.innerHTML=`<div class="dhead"><small>${fmt(d)}</small><h1>통독 자료 준비 중</h1></div>
       <div class="sunday"><p>이 날의 통독 가이드가 아직 등록되지 않았어요.</p></div>`;
@@ -432,9 +446,9 @@ function openDay(k){
     cards.onscroll=()=>{const i=Math.round(cards.scrollLeft/cards.clientWidth);if(i!==cur)mark(i)};
     cards.onclick=()=>{wrap.style.display=dots.style.display=bar.style.display="none";g.classList.add("on");
       const top=document.querySelector("#day .dhead");g.setAttribute("tabindex","-1");g.focus({preventScroll:true});
-      window.scrollTo({top:Math.max(0,top.getBoundingClientRect().top+window.scrollY-16)})};
+      window.scrollTo({top:Math.max(0,top.getBoundingClientRect().top+window.scrollY-document.querySelector(".daybar").offsetHeight-12)})};
     document.getElementById("closeGuide").onclick=()=>{g.classList.remove("on");wrap.style.display="block";dots.style.display="flex";bar.style.display="flex";
-      window.scrollTo({top:Math.max(0,document.querySelector("#day .dhead").getBoundingClientRect().top+window.scrollY-16)})};
+      window.scrollTo({top:0})};
     mark(0);
     document.getElementById("saveCards").onclick=()=>openSheet(k,cards);
   }

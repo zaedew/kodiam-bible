@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>코디엠 성경통독</title>
+<meta name="theme-color" content="#163F73">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="코디엠 통독">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📖</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F6F9FC; --surface:#FFFFFF; --ink:#132C48; --soft:#5A7390;
+  --blue:#1F5FA8; --deep:#163F73; --sky:#DCE8F6; --line:#CFDCEB;
+  --water:#3E86CF; --water2:#7FB2E5; --rest:#EEF2F7;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0E1A28; --surface:#152536; --ink:#E6EEF7; --soft:#9DB2C9;
+    --blue:#6FA8E6; --deep:#A9CCF2; --sky:#1C3550; --line:#27405C;
+    --water:#3B7CC0; --water2:#5E9AD6; --rest:#1A2B3D;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0E1A28; --surface:#152536; --ink:#E6EEF7; --soft:#9DB2C9;
+  --blue:#6FA8E6; --deep:#A9CCF2; --sky:#1C3550; --line:#27405C;
+  --water:#3B7CC0; --water2:#5E9AD6; --rest:#1A2B3D;
+  color-scheme: dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100%;background:var(--paper);color:var(--ink);
+  font-family:"Noto Sans KR",-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.serif{font-family:"Gowun Batang","Nanum Myeongjo",serif}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--water2);outline-offset:2px}
+.app{max-width:460px;margin:0 auto;padding:20px 20px 40px}
+.view{display:none}.view.on{display:block}
+
+/* 홈 */
+.hello{margin:8px 0 22px}
+.hello small{display:block;color:var(--soft);font-size:14px}
+.hello h1{margin:2px 0 0;font-size:26px;line-height:1.35;font-weight:700}
+
+.vessel-wrap{display:flex;gap:18px;align-items:center;background:var(--surface);
+  border:1px solid var(--line);border-radius:22px;padding:18px 20px}
+.vessel{width:96px;flex:none}
+.vessel svg{display:block;width:100%;height:auto}
+.stats p{margin:0}
+.stats .big{font-family:"Gowun Batang",serif;font-size:34px;font-weight:700;line-height:1.1;color:var(--deep)}
+.stats .sub{color:var(--soft);font-size:14px;margin-top:6px}
+.stats .link{margin-top:10px;background:none;border:0;padding:0;color:var(--blue);font-weight:500;font-size:14px;text-decoration:underline;text-underline-offset:3px}
+
+.today{margin-top:18px;background:var(--deep);color:#fff;border-radius:22px;padding:22px 22px 20px}
+:root[data-theme="dark"] .today{color:#0E1A28}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .today{color:#0E1A28}}
+.today .date{font-size:14px;opacity:.8}
+.today .passage{font-family:"Gowun Batang",serif;font-size:28px;line-height:1.3;margin:6px 0 16px;font-weight:700}
+.today .row{display:flex;gap:10px;flex-wrap:wrap}
+.btn{border:0;border-radius:999px;padding:12px 18px;font-weight:700;font-size:15px}
+.btn-light{background:#fff;color:#163F73}
+.btn-ghost{background:transparent;border:1.5px solid currentColor;color:inherit}
+.btn-ghost.done{background:rgba(255,255,255,.18)}
+.together{margin:14px 0 0;font-size:14px;opacity:.9}
+
+.week{margin-top:22px}
+.week h2{font-size:16px;margin:0 0 10px}
+.strip{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.dayc{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px 0;text-align:center;font-size:13px}
+.dayc b{display:block;font-size:16px}
+.dayc.rest{background:var(--rest);color:var(--soft)}
+.dayc.read{background:var(--sky);border-color:var(--blue)}
+.dayc.now{outline:2px solid var(--blue);outline-offset:1px}
+.dayc .dot{display:block;height:6px;width:6px;border-radius:50%;margin:4px auto 0;background:transparent}
+.dayc.read .dot{background:var(--blue)}
+
+/* 오늘 분량 화면 */
+.top{display:flex;align-items:center;gap:8px;margin:0 0 16px}
+.back{background:none;border:0;padding:8px 10px 8px 0;font-size:15px;color:var(--blue);font-weight:500}
+.dhead small{color:var(--soft);font-size:14px}
+.dhead h1{font-family:"Gowun Batang",serif;font-size:28px;line-height:1.3;margin:2px 0 18px}
+
+.teaser{position:relative;width:100%;aspect-ratio:1/1;border:0;padding:0;border-radius:20px;overflow:hidden;
+  background:linear-gradient(160deg,#1F5FA8,#163F73);color:#fff;text-align:left;display:block}
+.teaser .inner{position:absolute;inset:0;padding:26px;display:flex;flex-direction:column;justify-content:space-between}
+.teaser .q{font-family:"Gowun Batang",serif;font-size:26px;line-height:1.45;font-weight:700}
+.teaser .meta{font-size:12px;opacity:.75}
+.teaser .hint{position:absolute;right:14px;bottom:14px;background:rgba(255,255,255,.92);color:#163F73;font-size:13px;font-weight:700;padding:7px 12px;border-radius:999px}
+.guide{display:none;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:22px;margin-top:0}
+.guide.on{display:block}
+.guide h3{font-family:"Gowun Batang",serif;font-size:20px;margin:0 0 8px}
+.guide p{margin:0 0 10px}
+.guide .file{font-size:13px;color:var(--soft)}
+.guide p{line-height:1.8}
+.guide .box{background:var(--sky);border-radius:14px;padding:14px 16px;margin:14px 0}
+.guide .box b{display:block;font-size:14px;color:var(--deep);margin-bottom:4px}
+.guide .box p{margin:0}
+.teaser .q{font-size:23px}
+.guide .close{background:none;border:0;color:var(--blue);padding:0;font-weight:500;text-decoration:underline;text-underline-offset:3px}
+
+.yt{display:flex;align-items:center;gap:12px;margin-top:14px;background:var(--surface);border:1px solid var(--line);
+  border-radius:18px;padding:14px 16px;text-decoration:none;color:var(--ink)}
+.yt svg{flex:none}
+.yt b{display:block;font-size:16px}
+.yt span{font-size:13px;color:var(--soft)}
+
+.check{margin-top:22px;width:100%;border:0;border-radius:18px;padding:18px;font-size:17px;font-weight:700;
+  background:var(--blue);color:#fff;transition:background .2s}
+:root[data-theme="dark"] .check{color:#0E1A28}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .check{color:#0E1A28}}
+.check.done{background:var(--sky);color:var(--deep)}
+.note{font-size:13px;color:var(--soft);text-align:center;margin:10px 0 0}
+
+.sunday{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:24px}
+.sunday h2{font-family:"Gowun Batang",serif;margin:0 0 6px;font-size:22px}
+.sunday p{margin:0 0 14px;color:var(--soft)}
+
+.cards{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;border-radius:20px;scrollbar-width:none}
+.cards::-webkit-scrollbar{display:none}
+.cards canvas{flex:0 0 100%;width:100%;height:auto;aspect-ratio:1/1;scroll-snap-align:start;border-radius:20px;cursor:pointer;background:#F8F3F0}
+.dots{display:flex;justify-content:center;gap:6px;margin:10px 0 2px}
+.dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}
+.dots i.on{background:var(--blue)}
+.cardbar{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--soft)}
+.cardbar button{background:none;border:0;padding:6px 0;color:var(--blue);font-weight:500;text-decoration:underline;text-underline-offset:3px}
+.sheet{position:fixed;inset:0;background:rgba(10,25,45,.6);display:none;align-items:flex-end;justify-content:center;z-index:30}
+.sheet.on{display:flex}
+.sheet .in{background:var(--surface);width:100%;max-width:460px;max-height:90%;overflow:auto;border-radius:24px 24px 0 0;padding:22px 20px calc(22px + env(safe-area-inset-bottom,0px))}
+.sheet h2{font-family:"Gowun Batang",serif;margin:0 0 4px;font-size:21px}
+.sheet p{margin:0 0 14px;color:var(--soft);font-size:14px}
+.sheet .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sheet figure{margin:0}.sheet img{width:100%;border-radius:10px;display:block}
+.sheet figcaption{font-size:11px;color:var(--soft);margin-top:4px;word-break:break-all}
+.capbox{margin-top:16px}
+.caphead{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:14px}
+.caphead button{background:none;border:0;color:var(--blue);font-weight:700;padding:6px 0}
+.capbox textarea{width:100%;font:inherit;font-size:13px;line-height:1.6;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--paper);color:var(--ink);resize:vertical}
+.sheet .btn{margin-top:16px;width:100%;background:var(--blue);color:#fff;border-radius:14px;padding:14px}
+
+/* 기록 화면 */
+.calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.calhead h2{margin:0;font-size:20px}
+.calhead button{background:var(--surface);border:1px solid var(--line);border-radius:999px;width:40px;height:40px}
+.wk{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;font-size:12px;color:var(--soft);text-align:center;margin-bottom:6px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cell{aspect-ratio:1/1;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-size:14px;display:flex;align-items:center;justify-content:center;padding:0}
+.cell.empty{border:0;background:none}
+.cell.rest{background:var(--rest);color:var(--soft);border-color:transparent}
+.cell.read{background:var(--blue);color:#fff;border-color:var(--blue)}
+.cell.future{color:var(--soft);opacity:.6}
+.cell.now{outline:2px solid var(--blue);outline-offset:1px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--soft);margin-top:14px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:4px;vertical-align:-1px;margin-right:5px}
+.recsum{margin-top:18px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px 18px;font-size:15px}
+.recsum p{margin:0 0 6px}.recsum p:last-child{margin:0;color:var(--soft);font-size:14px}
+
+.proto{margin-top:30px;font-size:12px;color:var(--soft);text-align:center;line-height:1.5}
+
+/* 이름 묻기 */
+.ask{position:fixed;inset:0;background:rgba(10,25,45,.55);display:none;align-items:flex-end;justify-content:center;z-index:20}
+.ask.on{display:flex}
+.ask form{background:var(--surface);width:100%;max-width:460px;border-radius:24px 24px 0 0;padding:26px 22px calc(26px + env(safe-area-inset-bottom,0px))}
+.ask h2{font-family:"Gowun Batang",serif;margin:0 0 6px;font-size:22px}
+.ask p{margin:0 0 14px;color:var(--soft);font-size:14px}
+.ask input{width:100%;font:inherit;padding:14px 16px;border-radius:14px;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+.ask .btn{margin-top:12px;width:100%;background:var(--blue);color:#fff;border-radius:14px;padding:14px}
+
+#water{transition:transform 1.4s cubic-bezier(.2,.7,.2,1)}
+@media (prefers-reduced-motion: reduce){#water{transition:none}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- 홈 -->
+  <section class="view on" id="home" aria-label="홈">
+    <header class="hello">
+      <small id="greetTime">좋은 아침이에요</small>
+      <h1 id="greetName">함께 읽어요</h1>
+    </header>
+
+    <div class="vessel-wrap">
+      <div class="vessel" aria-hidden="true">
+        <svg viewBox="0 0 100 130">
+          <defs>
+            <clipPath id="jar"><path d="M30 8 h40 v14 c0 6 14 10 18 26 c4 18 4 46 0 62 c-3 12 -14 16 -38 16 s-35 -4 -38 -16 c-4 -16 -4 -44 0 -62 c4 -16 18 -20 18 -26 z"/></clipPath>
+          </defs>
+          <g clip-path="url(#jar)">
+            <rect x="0" y="0" width="100" height="130" fill="var(--sky)"/>
+            <g id="water" style="transform:translateY(130px)">
+              <path d="M0 4 q12 -6 25 0 t25 0 t25 0 t25 0 v130 h-100z" fill="var(--water2)" opacity=".7"/>
+              <path d="M0 8 q12 -5 25 0 t25 0 t25 0 t25 0 v130 h-100z" fill="var(--water)"/>
+            </g>
+          </g>
+          <path d="M30 8 h40 v14 c0 6 14 10 18 26 c4 18 4 46 0 62 c-3 12 -14 16 -38 16 s-35 -4 -38 -16 c-4 -16 -4 -44 0 -62 c4 -16 18 -20 18 -26 z" fill="none" stroke="var(--deep)" stroke-width="3"/>
+        </svg>
+      </div>
+      <div class="stats">
+        <p class="big" id="pct">0%</p>
+        <p class="sub" id="chap">올해 1,189장 중 0장을 읽었어요</p>
+        <button class="link" data-go="record">내 통독 기록 보기</button>
+      </div>
+    </div>
+
+    <div class="today" id="todayBox"></div>
+
+    <div class="week">
+      <h2>이번 주</h2>
+      <div class="strip" id="strip"></div>
+    </div>
+
+    <p class="proto">코디엠교회 마중물 성경통독</p>
+  </section>
+
+  <!-- 하루 화면 -->
+  <section class="view" id="day" aria-label="오늘 분량">
+    <div class="top"><button class="back" data-go="home">‹ 처음으로</button></div>
+    <div id="dayBody"></div>
+  </section>
+
+  <!-- 기록 -->
+  <section class="view" id="record" aria-label="내 통독 기록">
+    <div class="top"><button class="back" data-go="home">‹ 처음으로</button></div>
+    <div class="calhead">
+      <button id="prevM" aria-label="이전 달">‹</button>
+      <h2 id="mTitle"></h2>
+      <button id="nextM" aria-label="다음 달">›</button>
+    </div>
+    <div class="wk"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+    <div class="cal" id="cal"></div>
+    <div class="legend">
+      <span><i style="background:var(--blue)"></i>읽은 날</span>
+      <span><i style="border:1px solid var(--line);background:var(--surface)"></i>아직 읽지 않은 날</span>
+      <span><i style="background:var(--rest)"></i>쉬는 날</span>
+    </div>
+    <div class="recsum" id="recsum"></div>
+  </section>
+</div>
+
+<div class="sheet" id="sheet" role="dialog" aria-label="카드 이미지 저장">
+  <div class="in">
+    <h2>티저 카드 이미지</h2>
+    <p>이미지를 길게 누르거나(휴대폰) 오른쪽 클릭해서(컴퓨터) 저장하세요. 인스타그램에 올리는 카드와 같은 1080×1080 원본이에요.</p>
+    <div class="grid" id="sheetGrid"></div>
+    <div id="capBox" class="capbox">
+      <div class="caphead"><b>인스타그램 캡션</b><button id="capCopy">캡션 복사</button></div>
+      <textarea id="capText" rows="9" readonly></textarea>
+    </div>
+    <button class="btn" id="sheetClose">닫기</button>
+  </div>
+</div>
+
+<div class="ask" id="ask">
+  <form id="askForm">
+    <h2>반가워요</h2>
+    <p>어떻게 불러드릴까요? 이 이름은 이 휴대폰에만 저장돼요.</p>
+    <input id="nameIn" maxlength="12" placeholder="예: 김코디" autocomplete="name" required>
+    <button class="btn" type="submit">시작하기</button>
+  </form>
+</div>
+
+<script>
+/* ---------- 예시 통독표: 실제 통독표 CSV로 교체 예정 ---------- */
+const BOOKS=[["창세기",50],["출애굽기",40],["레위기",27],["민수기",36],["신명기",34],["여호수아",24],["사사기",21],["룻기",4],["사무엘상",31],["사무엘하",24],["열왕기상",22],["열왕기하",25],["역대상",29],["역대하",36],["에스라",10],["느헤미야",13],["에스더",10],["욥기",42],["시편",150],["잠언",31],["전도서",12],["아가",8],["이사야",66],["예레미야",52],["예레미야애가",5],["에스겔",48],["다니엘",12],["호세아",14],["요엘",3],["아모스",9],["오바댜",1],["요나",4],["미가",7],["나훔",3],["하박국",3],["스바냐",3],["학개",2],["스가랴",14],["말라기",4],["마태복음",28],["마가복음",16],["누가복음",24],["요한복음",21],["사도행전",28],["로마서",16],["고린도전서",16],["고린도후서",13],["갈라디아서",6],["에베소서",6],["빌립보서",4],["골로새서",4],["데살로니가전서",5],["데살로니가후서",3],["디모데전서",6],["디모데후서",4],["디도서",3],["빌레몬서",1],["히브리서",13],["야고보서",5],["베드로전서",5],["베드로후서",3],["요한일서",5],["요한이서",1],["요한삼서",1],["유다서",1],["요한계시록",22]];
+const CH=[];BOOKS.forEach(([b,n])=>{for(let i=1;i<=n;i++)CH.push([b,i])});
+const TOTAL=CH.length;
+const YOUTUBE="https://www.youtube.com/@kodiamtv";
+const WD=["일","월","화","수","목","금","토"];
+
+const pad=n=>String(n).padStart(2,"0");
+const key=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const fromKey=k=>{const [y,m,d]=k.split("-").map(Number);return new Date(y,m-1,d)};
+const today=new Date();today.setHours(0,0,0,0);
+const YEAR=today.getFullYear();
+
+/* ===== 설정: 구글 시트 "웹에 게시(CSV)" 주소를 여기에 넣으세요 ===== */
+const SHEET_URL="";
+/* 시트를 못 읽을 때 쓰는 기본 자료 */
+const RAW=[{"date": "10.25", "bible": "", "title": "", "word_1": "", "word_2": "", "word_3": "", "think": "", "prayer": "", "ep": "", "q1": "", "t1": "", "q2": "", "t2": "", "q3": "", "t3": "", "outro1": "", "outro2": "", "caption": ""}, {"date": "10.26", "bible": "요한복음 1-3장", "title": "내려오신 생명", "word_1": "요한은 족보나 탄생 이야기 대신 태초로 거슬러 올라갑니다. 말씀이 하나님과 함께 계셨고, 그 말씀이 육신이 되어 우리 가운데 장막을 치셨습니다. 멀리서 지켜보시는 분이 아니라, 갈증 난 삶 한복판으로 들어오신 하나님입니다. 세례 요한은 예수를 가리켜 ‘세상 죄를 지고 가는 하나님의 어린 양’으로, 나다나엘은 ‘하나님의 아들, 이스라엘의 임금’으로 고백합니다.", "word_2": "가나의 혼인 잔치에서 예수는 떨어진 포도주를 가장 좋은 포도주로 바꾸십니다. 잔치가 끊긴 자리에 기쁨을 되돌리시는 첫 표적입니다. 예루살렘 성전에서는 장사하는 상을 뒤엎으시고, 헐면 사흘 만에 일으키겠다며 자기 몸을 참된 성전이라 하십니다.", "word_3": "밤에 찾아온 니고데모는 율법에 밝은 지도자였지만, 위로부터 나지 않으면 하나님 나라를 볼 수 없다는 말씀 앞에서 되묻기만 합니다. 아는 것으로는 닿을 수 없는 생명입니다. 하나님이 세상을 이처럼 사랑하사 독생자를 주셨습니다.", "think": "나는 지금 예수를 누구라고 고백하고 있습니까? 그 고백은 내 일상에서 어떻게 드러납니까?", "prayer": "코디엠교회가 수서와 일원과 항동에서 생명이 느껴지고 보여지는 공동체가 되기를 위하여.", "ep": "256", "q1": "요한은 왜 족보도|탄생도 건너뛰었을까?", "t1": "더 앞으로 가야 했습니다.", "q2": "예수는 왜 성전을|헐라고 하셨을까?", "t2": "건물 이야기가 아니었습니다.", "q3": "율법에 밝던 니고데모는|왜 못 알아들었을까?", "t3": "아는 것으로 닿는 자리가 아니었습니다.", "outro1": "오늘, 그 생명을", "outro2": "함께 맞이하시겠습니까?", "caption": "내려오신 생명|요한복음 1~3장 | 하임레시피 256||요한은 족보도 탄생도 건너뛰고 태초로 거슬러 올라갑니다.|그 말씀이 육신이 되어 우리 가운데 장막을 치셨습니다.||멀리서 지켜보시는 분이 아니었습니다.|하나님이 우리 곁으로 걸어오셨습니다.||🎧 매일 새벽 5시 30분, 하임레시피|📖 오늘의 질문 — 나는 지금 예수를 누구라고 고백하고 있습니까?||#코디엠교회 #성경통독 #하임레시피 #요한복음 #매일성경 #큐티 #말씀묵상 #새벽예배 #성경읽기 #수서동교회"}, {"date": "10.27", "bible": "요한복음 4-6장", "title": "생명의 떡", "word_1": "예수는 유대를 떠나 굳이 사마리아를 지나가십니다. 한낮에 우물을 찾아온 여인에게 먼저 물을 청하시고, 영원히 목마르지 않는 생수를 말씀하십니다. 어디서 예배할 것인가를 묻는 여인에게 예수는 장소가 아니라 영과 진리로 드리는 예배를 말씀하십니다. 감추고 싶은 삶이 드러난 자리에서 여인은 마을로 달려가 증언하는 사람이 됩니다. 이어 가나에서는 왕의 신하의 아들을 말씀 한마디로 살리십니다.", "word_2": "베데스다 못가에는 서른여덟 해 된 병자가 누워 있습니다. 넣어 줄 사람이 없다는 그에게 예수는 자리를 들고 걸으라 하십니다. 안식일이라는 이유로 갈등이 시작되고, 예수는 아버지께서 일하시니 나도 일한다고 답하십니다.", "word_3": "오천 명을 먹이신 다음 날, 사람들은 다시 떡을 찾아 몰려옵니다. 예수는 썩을 양식이 아니라 영생하도록 있는 양식을 구하라 하시며, 자신이 생명의 떡이라 하십니다. 그 말씀에 많은 제자가 떠나갑니다.", "think": "“영생의 말씀이 주께 있사오니 우리가 누구에게로 가오리이까”라는 고백이 나에게 의미하는 바는 무엇입니까?", "prayer": "코디엠교회의 말씀 사역 위에 성령이 함께하셔서, 날마다 생명의 말씀이 풍성히 흘러나오는 공동체가 되기를 위하여.", "ep": "257", "q1": "예수는 왜 먼저|물을 달라고 하셨을까?", "t1": "목이 마르셨기 때문만은 아니었습니다.", "q2": "안식일에 고치신|이유는 무엇이었을까?", "t2": "하필 그날이어야 했습니다.", "q3": "제자들은 왜|떠나지 않았을까?", "t3": "다 이해해서가 아니었습니다.", "outro1": "오늘, 그 자리를", "outro2": "함께 지키시겠습니까?", "caption": "생명의 떡|요한복음 4~6장 | 하임레시피 257||목마른 여인에게 먼저 물을 청하시고,|서른여덟 해 누워 있던 사람을 일으키시고,|오천 명을 배불리 먹이셨습니다.||그런데 다음 날 다시 떡을 찾아온 이들에게 말씀하십니다.|썩을 양식이 아니라 영생하도록 있는 양식을 구하라고.||떡을 구하다 생명을 놓치지 마십시오.||🎧 매일 새벽 5시 30분, 하임레시피|📖 오늘의 질문 — \"영생의 말씀이 주께 있사오니 우리가 누구에게로 가오리이까\"라는 고백이 나에게 의미하는 바는 무엇입니까?||#코디엠교회 #성경통독 #하임레시피 #요한복음 #매일성경 #큐티 #말씀묵상 #새벽예배 #성경읽기 #수서동교회"}, {"date": "10.28", "bible": "요한복음 7-8장", "title": "생명의 물과 빛", "word_1": "초막절입니다. 광야에서 물을 주시고 불기둥으로 인도하신 하나님을 기념하며, 제사장이 실로암 물을 길어 붓고 성전에 큰 등불을 밝히던 명절입니다. 물을 붓는 명절 끝날, 예수는 서서 외치십니다. 목마르거든 내게로 와서 마시라고 하십니다. 상징이 가리키던 실체가 그 자리에 서 계셨습니다.", "word_2": "간음하다 잡힌 여인이 끌려옵니다. 율법을 앞세워 돌을 든 사람들 앞에서 예수는 몸을 굽혀 땅에 쓰십니다. 죄 없는 자가 먼저 치라는 말씀에 어른부터 물러갑니다. 남은 것은 정죄하지 않으시는 한 분과, 다시 죄를 짓지 말라는 말씀입니다.", "word_3": "돌을 든 사람들이 물러간 그 성전, 등불이 밝혀진 자리에서 예수는 자신이 세상의 빛이라 하십니다. 빛은 어둠 속에 감추어진 것들을 드러나게 합니다. 뿐만 아니라 빛이신 예수는 생명까지 주시는 분이십니다. 또한 진리를 알지니 진리가 너희를 자유롭게 하리라 가르치십니다.", "think": "죽을 줄 알았던 여인이 살 수 있었던 이유는 무엇이라고 생각합니까?", "prayer": "코디엠교회가 세워진 지역에 세상의 빛을 퍼뜨리고, 생명의 강을 흘려보내는 공동체가 되기를 위하여.", "ep": "258", "q1": "예수는 왜 명절 끝날에|외치셨을까?", "t1": "하필 그 순간이었습니다.", "q2": "성전에서 쫓겨난|사람은 누구였을까?", "t2": "끌려온 여인이 아니었습니다.", "q3": "빛은 왜|우리를 드러낼까?", "t3": "고발하려는 빛이 아닙니다.", "outro1": "오늘, 그 빛 앞에", "outro2": "함께 서 보시겠습니까?", "caption": "생명의 물과 빛|요한복음 7~8장 | 하임레시피 258||초막절은 물과 빛의 축제였습니다.|제사장이 실로암 물을 길어 제단에 붓고,|성전 뜰에는 큰 등불을 밝혔습니다.||그 한복판에서 한 분이 일어서십니다.|목마르거든 내게로 와서 마시라고,|나는 세상의 빛이라고.||상징이 가리키던 분이 그 자리에 서 계셨습니다.||🎧 매일 새벽 5시 30분, 하임레시피|📖 오늘의 질문 — 죽을 줄 알았던 여인이 살 수 있었던 이유는 무엇이라고 생각합니까?||#코디엠교회 #성경통독 #하임레시피 #요한복음 #매일성경 #큐티 #말씀묵상 #새벽예배 #성경읽기 #수서동교회"}, {"date": "10.29", "bible": "요한복음 9-10장", "title": "생명을 주시는 목자", "word_1": "날 때부터 보지 못하는 사람을 두고 제자들은 상태의 원인에 대해 관심을 두지만, ‘세상의 빛’이신 예수는 그를 통해 나타날 ‘하나님이 하실 일’에 관심이 있습니다. 마치 창조 사역을 하듯 예수는 진흙을 눈에 바르시고 실로암으로 보내시니, 그가 씻고 빛을 보게 되었습니다.", "word_2": "그때부터 심문이 시작됩니다. 바리새인들은 안식일을 들어 몰아세우고, 부모는 두려워 발을 뺍니다. 본 것밖에 말할 게 없던 사람은 끝내 쫓겨납니다. 예수는 쫓겨난 그를 찾아가 만나 주시고, 그는 엎드려 경배합니다. 보지 못하던 자는 보게 되고, 본다고 하던 자들의 죄는 그대로 남습니다.", "word_3": "예수는 자신을 선한 목자라 하십니다. 삯꾼은 이리를 보면 달아나지만, 목자는 양의 이름을 하나하나 불러 인도하고 그들을 위해 목숨을 버립니다. 도둑은 죽이러 오지만, 그분은 생명을 주러, 그것도 더 풍성히 주러 오셨습니다.", "think": "믿음 때문에 회당에서 추방된 자를 예수께서 찾아가신 이유는 무엇이라고 생각합니까?", "prayer": "코디엠교회가 죽어가는 영혼과 살고자 하는 이들에게 찾아가, 풍성한 생명을 전하는 공동체가 되기를 위하여.", "ep": "259", "q1": "제자들의 질문은|왜 빗나갔을까?", "t1": "예수는 다른 쪽을 보고 계셨습니다.", "q2": "왜 캐물을수록|더 분명해졌을까?", "t2": "덮으려는 쪽이 드러내고 있었습니다.", "q3": "쫓아낸 것이|왜 끝이 아니었을까?", "t3": "밖에서 만난 분이 계셨습니다.", "outro1": "오늘, 하나님의 일을", "outro2": "함께 보시겠습니까?", "caption": "생명을 주시는 목자|요한복음 9~10장 | 하임레시피 259||제자들은 누구의 죄 때문이냐고 물었습니다.|예수님은 하나님이 하시는 일이 나타나기 위함이라 하시고|그의 눈을 열어 주셨습니다.||그런데 눈을 뜬 그 사람은 회당에서 쫓겨납니다.|예수님은 그 소식을 들으시고 그를 찾아가십니다.||목자는 양을 살리러 오셨습니다.||🎧 매일 새벽 5시 30분, 하임레시피|📖 오늘의 질문 — 믿음 때문에 회당에서 추방된 자를 예수께서 찾아가신 이유는 무엇이라고 생각합니까?||#코디엠교회 #성경통독 #하임레시피 #요한복음 #매일성경 #큐티 #말씀묵상 #새벽예배 #성경읽기 #수서동교회"}, {"date": "10.30", "bible": "요한복음 11-12장", "title": "살리실수록 죽음이...", "word_1": "나사로가 병들었다는 소식을 듣고도 예수는 이틀을 더 머무십니다. 도착했을 때는 이미 나흘이 지난 뒤였습니다. 마르다에게 예수는 자신이 부활이요 생명이라 하십니다. 그리고 우시고, 무덤 앞에서 나사로야 나오라 부르십니다. 결말을 아시면서도 함께 우신 분이었습니다.", "word_2": "한 사람을 살리시자 죽음이 결정됩니다. 대제사장들은 한 사람이 백성을 위해 죽는 것이 유익하다며 예수를 죽이기로 하고, 살아난 나사로까지 죽이려 합니다. 살리실수록 죽음이 가까워집니다.", "word_3": "유월절 엿새 전, 마리아는 향유를 예수의 발에 붓고, 예수는 장례를 위한 일이라 하십니다. 이튿날 무리는 종려나무를 들고 왕을 맞이합니다. 헬라인들이 뵙기를 청하자 예수는 때가 왔다 하시며, 한 알의 밀이 땅에 떨어져 죽어야 많은 열매를 맺는다고 말씀하십니다. 살리신 분이 죽어야 할 차례였습니다.", "think": "풍성한 생명을 주러 오셨다는 분이 나사로의 소식을 듣고 지체하신 이유는 무엇이라고 생각합니까?", "prayer": "코디엠교회가 슬퍼하는 이들 곁에서 함께 울어주며, 그리스도의 긍휼을 품기를 위하여.", "ep": "260", "q1": "사랑하신다면서|왜 지체하셨을까?", "t1": "나흘을 기다리신 이유가 있었습니다.", "q2": "생명을 살렸는데|왜 죽이기로 했을까?", "t2": "한 사람의 기쁨은 셈에 없었습니다.", "q3": "죽는 것이|왜 영광이 되는 걸까?", "t3": "밀 한 알이 땅에 떨어졌습니다.", "outro1": "오늘, 그 걸음을", "outro2": "함께 따라가시겠습니까?", "caption": "살리실수록 죽음이...|요한복음 11~12장 | 하임레시피 260||사랑하시는 자가 병들었다는 소식을 들으시고도|예수님은 이틀을 더 머무셨습니다.|나흘이 지난 무덤 앞에서 함께 우셨고,|그를 불러내어 살리셨습니다.||그런데 그 소식을 들은 이들은|예수를 죽이기로 결의합니다.|한 사람이 무덤에서 걸어 나온 그 순간,|주님은 무덤을 향해 걸어가시게 되었습니다.||살리실수록 죽음으로 걸어가셨습니다.||🎧 매일 새벽 5시 30분, 하임레시피|📖 오늘의 질문 — 풍성한 생명을 주러 오셨다는 분이 나사로의 소식을 듣고 지체하신 이유는 무엇이라고 생각합니까?||#코디엠교회 #성경통독 #하임레시피 #요한복음 #매일성경 #큐티 #말씀묵상 #새벽예배 #성경읽기 #수서동교회"}, {"date": "10.31", "bible": "요한복음 13-14장", "title": "길과 진리이신 생명", "word_1": "유월절 전, 예수는 자기 사람들을 끝까지 사랑하십니다. 저녁 먹던 자리에서 일어나 겉옷을 벗고 수건을 두르신 뒤 제자들의 발을 씻기십니다. 종이 하던 일이었습니다. 배반할 유다의 발도 그 안에 있었습니다. 떡 한 조각을 받아 든 유다가 밖으로 나가고, 요한은 그때가 밤이었다고 적습니다. 빛을 등지고 어둠으로 걸어 나간 것입니다.", "word_2": "예수는 서로 사랑하라는 새 계명을 주십니다. 목숨을 버리겠다 장담하는 베드로에게는 닭 울기 전에 세 번 부인하리라 하십니다.", "word_3": "떠나신다는 말에 제자들이 근심하자, 예수는 평안과 위로의 말을 건넵니다. 그것은 바로 아버지 집에서 함께 머물 거처입니다. 그리고 그 길을 모르겠다는 제자들에게, 예수는 자신이 곧 길이요 진리요 생명이라 하십니다. 이어서 보혜사 성령을 약속하십니다. 진리의 영이신 성령을 통해 제자들은 예수의 말을 깨닫게 되며 평안을 누릴 수 있습니다.", "think": "이번 주 요한복음을 읽으면서, 나는 진리의 영이신 성령이 나를 무엇으로부터 자유롭게 하셨음을 발견했습니까?", "prayer": "코디엠교회가 길이요 진리요 생명이신 그리스도를 따라 걸으며, 성령이 주시는 참된 평안을 누리기를 위하여.", "ep": "261", "q1": "예수는 왜 유다의|발도 씻기셨을까?", "t1": "끝까지였습니다.", "q2": "요한은 왜|“밤이었다”고 적었을까?", "t2": "시간만 말한 것이 아니었습니다.", "q3": "길을 묻는 이에게|무엇이 주어졌을까?", "t3": "지도가 아니었습니다.", "outro1": "오늘, 그 길 위에", "outro2": "함께 걸어 보시겠습니까?", "caption": ""}];
+function countCh(t){let n=0;t.split(",").forEach(p=>{const m=p.match(/(\d+)\s*(?:[-–]\s*(\d+))?\s*장/);if(m)n+=m[2]?(+m[2]-+m[1]+1):1});return n}
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const PLAN={};let READING=[];
+function buildPlan(rows){
+  Object.keys(PLAN).forEach(k=>delete PLAN[k]);
+  rows.forEach(r=>{if(!r||!r.bible||!r.date)return;const [m,d]=String(r.date).trim().split(".").map(Number);if(!m||!d)return;
+    r.prayer=(r.prayer||"").replace(/^•\s*/,"");
+    PLAN[`${YEAR}-${pad(m)}-${pad(d)}`]={...r,label:r.bible.replace(/(\d)-(\d)/g,"$1–$2"),count:countCh(r.bible)}});
+  READING=Object.keys(PLAN).sort();
+}
+function parseCSV(t){
+  const out=[];let row=[],f="",q=false;
+  for(let i=0;i<t.length;i++){const c=t[i];
+    if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
+    else if(c==='"')q=true;else if(c===","){row.push(f);f=""}
+    else if(c==="\n"){row.push(f);out.push(row);row=[];f=""}else if(c!=="\r")f+=c}
+  if(f||row.length){row.push(f);out.push(row)}
+  const h=out.shift().map(x=>x.trim().replace(/^\uFEFF/,""));
+  return out.map(r=>Object.fromEntries(h.map((k,i)=>[k,(r[i]||"").trim()])));
+}
+buildPlan(RAW);
+
+/* ---------- 저장 (이 휴대폰 안에만) ---------- */
+function load(k,f){try{const v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+let read=new Set(load("kodiam-read",[]));
+let name=load("kodiam-name","");
+
+/* ---------- 홈 ---------- */
+function greet(){
+  const h=new Date().getHours();
+  document.getElementById("greetTime").textContent=h<5?"고요한 새벽이에요":h<11?"좋은 아침이에요":h<17?"평안한 오후예요":"오늘 하루도 수고 많으셨어요";
+  document.getElementById("greetName").textContent=name?`${name}님, 오늘도 함께 읽어요`:"오늘도 함께 읽어요";
+}
+function progress(){
+  let c=0;read.forEach(k=>{if(PLAN[k])c+=PLAN[k].count});
+  const p=c/TOTAL;
+  document.getElementById("pct").textContent=(p*100<10&&p>0?(p*100).toFixed(1):Math.round(p*100))+"%";
+  document.getElementById("chap").textContent=`올해 ${TOTAL.toLocaleString()}장 중 ${c.toLocaleString()}장을 읽었어요`;
+  requestAnimationFrame(()=>{document.getElementById("water").style.transform=`translateY(${130-Math.max(p,0.02)*118}px)`});
+}
+function fmt(d){return `${d.getMonth()+1}월 ${d.getDate()}일 ${WD[d.getDay()]}요일`}
+function renderToday(){
+  const k=key(today),box=document.getElementById("todayBox"),p=PLAN[k];
+  if(!p&&today.getDay()!==0){
+    box.innerHTML=`<div class="date">${fmt(today)}</div>
+      <div class="passage">오늘 통독 자료를 준비하고 있어요</div>`;
+    return;
+  }
+  if(!p){
+    box.innerHTML=`<div class="date">${fmt(today)}</div>
+      <div class="passage">오늘은 통독을 쉬는 날이에요</div>
+      <div class="row"><button class="btn btn-light" data-open="${k}">한 주의 질문과 답 보기</button></div>`;
+    return;
+  }
+  const done=read.has(k);
+  box.innerHTML=`<div class="date">${fmt(today)} 오늘의 본문</div>
+    <div class="passage">${p.label}</div>
+    <p class="together" style="margin:-8px 0 16px">${esc(p.title)}</p>
+    <div class="row">
+      <button class="btn btn-light" data-open="${k}">오늘 분량 보기</button>
+      <button class="btn btn-ghost ${done?"done":""}" data-toggle="${k}">${done?"읽었어요 ✓":"다 읽었어요"}</button>
+    </div>
+    ${!done&&hasMissed()?`<p class="together">지난 날은 그대로 두셔도 괜찮아요. 오늘 본문부터 함께 읽어요.</p>`:""}`;
+}
+function hasMissed(){const k=key(today);return READING.some(r=>r<k&&!read.has(r))}
+function renderStrip(){
+  const s=document.getElementById("strip"),start=new Date(today);start.setDate(today.getDate()-today.getDay());
+  let h="";
+  for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const k=key(d);
+    const cls=["dayc",d.getDay()===0?"rest":"",read.has(k)?"read":"",k===key(today)?"now":""].join(" ");
+    h+=`<button class="${cls}" data-open="${k}" aria-label="${fmt(d)}${read.has(k)?", 읽음":""}">${WD[d.getDay()]}<b>${d.getDate()}</b><span class="dot"></span></button>`}
+  s.innerHTML=h;
+}
+function renderHome(){greet();progress();renderToday();renderStrip()}
+
+/* ---------- 하루 화면 ---------- */
+function openDay(k){
+  const d=fromKey(k),p=PLAN[k],body=document.getElementById("dayBody");
+  if(!p&&d.getDay()!==0){
+    body.innerHTML=`<div class="dhead"><small>${fmt(d)}</small><h1>통독 자료 준비 중</h1></div>
+      <div class="sunday"><p>이 날의 통독 가이드가 아직 등록되지 않았어요.</p></div>`;
+    show("day");return;
+  }
+  if(!p){
+    body.innerHTML=`<div class="dhead"><small>${fmt(d)}</small><h1>쉼의 날</h1></div>
+      <div class="sunday"><h2>한 주의 질문과 답</h2>
+      <p>이번 주 성도들이 남긴 질문에 하임레시피 특별판으로 답해요.</p>
+      ${ytLink("하임레시피 특별판 듣기","유튜브에서 열려요")}</div>`;
+  }else{
+    const done=read.has(k);
+    body.innerHTML=`<div class="dhead"><small>${fmt(d)}</small><h1>${p.label}</h1></div>
+      <div class="cards" id="cards" aria-label="티저 카드 4장, 옆으로 넘겨 보세요"></div>
+      <div class="dots" id="dots"><i class="on"></i><i></i><i></i><i></i></div>
+      <div class="cardbar" id="cardbar"><span>카드를 누르면 통독 가이드가 열려요</span><button id="saveCards">카드 이미지 저장</button></div>
+      <div class="guide" id="guide">
+        <small class="file">${p.label} 통독 가이드</small>
+        <h3>${esc(p.title)}</h3>
+        ${[p.word_1,p.word_2,p.word_3].filter(Boolean).map(w=>`<p>${esc(w)}</p>`).join("")}
+        <div class="box"><b>생각해 볼 질문</b><p>${esc(p.think)}</p></div>
+        <div class="box"><b>함께 드리는 기도</b><p>${esc(p.prayer)}</p></div>
+        <button class="close" id="closeGuide">티저 카드 다시 보기</button>
+      </div>
+      ${ytLink("하임레시피 듣기","오늘 본문 방송이 유튜브에서 열려요")}
+      <button class="check ${done?"done":""}" data-toggle="${k}">${done?"읽었어요 ✓ (다시 누르면 취소)":"성경 본문을 다 읽었어요"}</button>
+      <p class="note">가이드와 방송은 읽기를 돕는 길잡이예요. 진도에는 본문 읽기만 기록돼요.</p>`;
+    const cards=document.getElementById("cards"),g=document.getElementById("guide"),bar=document.getElementById("cardbar"),dots=document.getElementById("dots");
+    drawCards(p,cards);
+    cards.onclick=()=>{cards.style.display=dots.style.display=bar.style.display="none";g.classList.add("on");document.getElementById("closeGuide").focus()};
+    cards.onscroll=()=>{const i=Math.round(cards.scrollLeft/cards.clientWidth);dots.querySelectorAll("i").forEach((d,j)=>d.classList.toggle("on",i===j))};
+    document.getElementById("closeGuide").onclick=()=>{g.classList.remove("on");cards.style.display="flex";dots.style.display="flex";bar.style.display="flex"};
+    document.getElementById("saveCards").onclick=()=>openSheet(k,cards);
+  }
+  show("day");
+}
+function ytLink(t,s){return `<a class="yt" href="${YOUTUBE}" target="_blank" rel="noopener">
+  <svg width="40" height="28" viewBox="0 0 40 28" aria-hidden="true"><rect width="40" height="28" rx="8" fill="#E33"/><path d="M16 8l10 6-10 6z" fill="#fff"/></svg>
+  <span><b>${t}</b><span>${s}</span></span></a>`}
+
+/* ---------- 티저 카드: 하임레시피 티저 카드 양식을 그대로 옮김 ---------- */
+const NAVY="#0A4DA8",CREAM="#F8F3F0",SOFT="#8FB2DC",LINE="#E2D8D2",FOOT="#9A8C86",RULED="#2E69B8";
+const SANS="'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif",SERIF="'Noto Serif KR', 'Nanum Myeongjo', serif";
+function wrapT(c,t,mw){const L=[];let cur="";for(const ch of t){if(ch==="\n"){L.push(cur);cur="";continue}const n=cur+ch;if(c.measureText(n).width>mw&&cur){L.push(cur);cur=ch.trimStart()}else cur=n}if(cur)L.push(cur);return L}
+function block(c,t,font,x,y,mw,lh,fill){c.font=font;c.fillStyle=fill;for(const ln of wrapT(c,t,mw)){c.fillText(ln,x,y);y+=lh}return y}
+function rule(c,x1,y1,x2,y2,col,w){c.strokeStyle=col;c.lineWidth=w;c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke()}
+function frame(c,bg,ln){c.fillStyle=bg;c.fillRect(0,0,1080,1080);c.strokeStyle=ln;c.lineWidth=2;c.strokeRect(55,55,970,970);c.textBaseline="top"}
+const head=ep=>`코디엠 성경통독 · 하임레시피${ep?" "+ep:""}`;
+function hook(c,ep,no,q,tw,dark){
+  const [bg,fg,acc,ln,foot]=dark?[NAVY,CREAM,SOFT,RULED,SOFT]:[CREAM,NAVY,NAVY,LINE,FOOT];
+  frame(c,bg,ln);
+  c.font=`400 26px ${SANS}`;c.fillStyle=dark?SOFT:FOOT;c.fillText(head(ep),120,140);
+  c.font=`300 72px ${SANS}`;c.fillStyle=dark?"#145CBE":acc;c.fillText(`Q${no}`,118,212);
+  let y=block(c,q,`700 80px ${SERIF}`,120,420,840,104,fg);
+  rule(c,120,y+44,240,y+44,dark?CREAM:acc,3);y+=104;
+  block(c,tw,`700 44px ${SERIF}`,120,y,840,66,dark?CREAM:acc);
+  rule(c,120,970,960,970,ln,2);
+  c.font=`400 22px ${SANS}`;c.fillStyle=foot;c.fillText("코디엠 성경통독  @kodiam_bible",120,992);
+}
+function outro(c,ep,bible,l1,l2,when="매일 새벽 5시 30분"){
+  frame(c,NAVY,RULED);
+  c.font=`400 26px ${SANS}`;c.fillStyle=SOFT;c.fillText(head(ep),120,140);
+  rule(c,120,420,240,420,CREAM,3);
+  c.font=`700 72px ${SERIF}`;c.fillStyle=CREAM;c.fillText(l1,120,478);c.fillText(l2,120,574);
+  rule(c,120,830,960,830,RULED,2);
+  c.font=`400 28px ${SANS}`;c.fillStyle=CREAM;c.fillText(`하임 레시피  ·  ${when}`,120,868);
+  c.font=`400 26px ${SANS}`;c.fillStyle=SOFT;c.fillText(`오늘 본문  ${bible}`,120,914);
+  c.font=`400 22px ${SANS}`;c.fillText("코디엠 성경통독  @kodiam_bible",120,978);
+}
+const br=t=>(t||"").replace(/\|/g,"\n");
+async function drawCards(p,box){
+  const qs=[[p.q1,p.t1],[p.q2,p.t2],[p.q3,p.t3]],bible=p.bible.replace(/(\d)-(\d)/g,"$1~$2");
+  const all=qs.flat().join("")+p.outro1+p.outro2+bible+"코디엠 성경통독하임레시피Q123@kodiam_bible매일새벽5시30분오늘본문";
+  try{await Promise.all([document.fonts.load(`700 80px 'Noto Serif KR'`,all),document.fonts.load(`300 72px 'Noto Sans KR'`,"Q123"),document.fonts.load(`400 26px 'Noto Sans KR'`,all)])}catch(e){}
+  box.innerHTML="";
+  qs.forEach(([q,t],i)=>{const cv=document.createElement("canvas");cv.width=cv.height=1080;cv.setAttribute("aria-label",`Q${i+1} ${(q||"").replace(/\|/g," ")}`);hook(cv.getContext("2d"),p.ep,i+1,br(q),t||"",i===0);box.appendChild(cv)});
+  const cv=document.createElement("canvas");cv.width=cv.height=1080;cv.setAttribute("aria-label",`${p.outro1} ${p.outro2}`);outro(cv.getContext("2d"),p.ep,bible,p.outro1||"",p.outro2||"");box.appendChild(cv);
+}
+function openSheet(k,box){
+  const grid=document.getElementById("sheetGrid");grid.innerHTML="";
+  box.querySelectorAll("canvas").forEach((cv,i)=>{const f=document.createElement("figure");const im=new Image();im.src=cv.toDataURL("image/png");im.alt=`티저 카드 ${i+1}`;
+    const cap=document.createElement("figcaption");cap.textContent=`${k}_${i+1}.png`;f.append(im,cap);grid.appendChild(f)});
+  const p=PLAN[k],cap=document.getElementById("capBox"),ta=document.getElementById("capText");
+  /* 캡션: 띄어 쓴 " | "는 구분 기호로 두고, 붙여 쓴 "|"만 줄바꿈 */
+  const text=p&&p.caption?p.caption.replace(/ \| /g,"\u0000").replace(/\|/g,"\n").replace(/\u0000/g," | "):"";
+  cap.style.display=text?"block":"none";ta.value=text;
+  document.getElementById("capCopy").textContent="캡션 복사";
+  document.getElementById("sheet").classList.add("on");
+}
+document.getElementById("capCopy").onclick=async()=>{const ta=document.getElementById("capText"),b=document.getElementById("capCopy");
+  try{await navigator.clipboard.writeText(ta.value);b.textContent="복사했어요"}catch(e){ta.select();try{document.execCommand("copy");b.textContent="복사했어요"}catch(_){b.textContent="길게 눌러 복사해 주세요"}}};
+document.getElementById("sheetClose").onclick=()=>document.getElementById("sheet").classList.remove("on");
+
+/* ---------- 기록 ---------- */
+let viewM=today.getMonth();
+function renderCal(){
+  const first=new Date(YEAR,viewM,1),days=new Date(YEAR,viewM+1,0).getDate();
+  document.getElementById("mTitle").textContent=`${YEAR}년 ${viewM+1}월`;
+  let h="";for(let i=0;i<first.getDay();i++)h+=`<span class="cell empty"></span>`;
+  for(let n=1;n<=days;n++){const d=new Date(YEAR,viewM,n),k=key(d);
+    const c=["cell",d.getDay()===0?"rest":"",read.has(k)?"read":"",(d>today||(!PLAN[k]&&d.getDay()!==0))?"future":"",k===key(today)?"now":""].join(" ");
+    h+=`<button class="${c}" data-open="${k}" aria-label="${fmt(d)}${read.has(k)?", 읽음":""}">${n}</button>`}
+  document.getElementById("cal").innerHTML=h;
+  document.getElementById("prevM").disabled=viewM===0;document.getElementById("nextM").disabled=viewM===11;
+  const k=key(today),past=READING.filter(r=>r<=k).length,f=fromKey(READING[0]),l=fromKey(READING[READING.length-1]);let days2=0;read.forEach(r=>{if(PLAN[r])days2++});
+  document.getElementById("recsum").innerHTML=`<p>지금까지 통독한 날 ${days2}일</p><p>날짜를 누르면 그날 본문을 열고, 원하실 때 놓친 날을 채울 수 있어요. 지금 등록된 통독 자료는 ${f.getMonth()+1}월 ${f.getDate()}일부터 ${l.getMonth()+1}월 ${l.getDate()}일까지예요.</p>`;
+}
+
+/* ---------- 공통 ---------- */
+function show(id){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.id===id));window.scrollTo(0,0);if(id==="home")renderHome();if(id==="record")renderCal()}
+document.addEventListener("click",e=>{
+  const o=e.target.closest("[data-open]"),g=e.target.closest("[data-go]"),t=e.target.closest("[data-toggle]");
+  if(t){const k=t.dataset.toggle;read.has(k)?read.delete(k):read.add(k);save("kodiam-read",[...read]);
+    if(document.getElementById("day").classList.contains("on"))openDay(k);else renderHome();return}
+  if(o){openDay(o.dataset.open);return}
+  if(g){show(g.dataset.go)}
+});
+document.getElementById("prevM").onclick=()=>{if(viewM>0){viewM--;renderCal()}};
+document.getElementById("nextM").onclick=()=>{if(viewM<11){viewM++;renderCal()}};
+document.getElementById("askForm").onsubmit=e=>{e.preventDefault();name=document.getElementById("nameIn").value.trim();save("kodiam-name",name);document.getElementById("ask").classList.remove("on");greet()};
+if(!name){document.getElementById("ask").classList.add("on");setTimeout(()=>document.getElementById("nameIn").focus(),100)}
+renderHome();
+if(SHEET_URL){fetch(SHEET_URL+(SHEET_URL.includes("?")?"&":"?")+"t="+Date.now(),{cache:"no-store"})
+  .then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{const rows=parseCSV(t);if(rows.length){buildPlan(rows);if(document.getElementById("home").classList.contains("on"))renderHome()}})
+  .catch(()=>{})}
+</script>
+</body>
+</html>

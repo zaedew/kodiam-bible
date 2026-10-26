@@ -127,6 +127,14 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(-
 .cards{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;border-radius:20px;scrollbar-width:none}
 .cards::-webkit-scrollbar{display:none}
 .cards canvas{flex:0 0 100%;width:100%;height:auto;aspect-ratio:1/1;scroll-snap-align:start;border-radius:20px;cursor:pointer;background:#F8F3F0}
+.cardwrap{position:relative}
+.cards{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){.cards{scroll-behavior:auto}}
+.arrow{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;border:0;
+  display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.9);color:#0A4DA8;
+  box-shadow:0 2px 8px rgba(10,40,80,.25);z-index:2}
+.arrow[hidden]{display:none}
+.arrow.prev{left:10px}.arrow.next{right:10px}
 .dots{display:flex;justify-content:center;gap:6px;margin:10px 0 2px}
 .dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}
 .dots i.on{background:var(--blue)}
@@ -379,7 +387,11 @@ function openDay(k){
   }else{
     const done=read.has(k);
     body.innerHTML=`<div class="dhead"><small>${fmt(d)}</small><h1>${p.label}</h1></div>
-      <div class="cards" id="cards" aria-label="티저 카드 4장, 옆으로 넘겨 보세요"></div>
+      <div class="cardwrap" id="cardwrap">
+        <div class="cards" id="cards" aria-label="티저 카드 4장"></div>
+        <button class="arrow prev" id="prevCard" aria-label="이전 카드" hidden><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="arrow next" id="nextCard" aria-label="다음 카드"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
       <div class="dots" id="dots"><i class="on"></i><i></i><i></i><i></i></div>
       <div class="cardbar" id="cardbar"><span>카드를 누르면 통독 가이드가 열려요</span><button id="saveCards">카드 이미지 저장</button></div>
       <div class="guide" id="guide">
@@ -395,9 +407,15 @@ function openDay(k){
       <p class="note">가이드와 방송은 읽기를 돕는 길잡이예요. 진도에는 본문 읽기만 기록돼요.</p>`;
     const cards=document.getElementById("cards"),g=document.getElementById("guide"),bar=document.getElementById("cardbar"),dots=document.getElementById("dots");
     drawCards(p,cards);
-    cards.onclick=()=>{cards.style.display=dots.style.display=bar.style.display="none";g.classList.add("on");document.getElementById("closeGuide").focus()};
-    cards.onscroll=()=>{const i=Math.round(cards.scrollLeft/cards.clientWidth);dots.querySelectorAll("i").forEach((d,j)=>d.classList.toggle("on",i===j))};
-    document.getElementById("closeGuide").onclick=()=>{g.classList.remove("on");cards.style.display="flex";dots.style.display="flex";bar.style.display="flex"};
+    const wrap=document.getElementById("cardwrap"),pv=document.getElementById("prevCard"),nx=document.getElementById("nextCard");
+    let cur=0;const N=4;
+    const mark=i=>{cur=i;pv.hidden=i===0;nx.hidden=i===N-1;dots.querySelectorAll("i").forEach((d,j)=>d.classList.toggle("on",i===j))};
+    const go=i=>{i=Math.max(0,Math.min(N-1,i));cards.scrollTo({left:i*cards.clientWidth});mark(i)};
+    pv.onclick=()=>go(cur-1);nx.onclick=()=>go(cur+1);
+    cards.onscroll=()=>{const i=Math.round(cards.scrollLeft/cards.clientWidth);if(i!==cur)mark(i)};
+    cards.onclick=()=>{wrap.style.display=dots.style.display=bar.style.display="none";g.classList.add("on");document.getElementById("closeGuide").focus()};
+    document.getElementById("closeGuide").onclick=()=>{g.classList.remove("on");wrap.style.display="block";dots.style.display="flex";bar.style.display="flex"};
+    mark(0);
     document.getElementById("saveCards").onclick=()=>openSheet(k,cards);
   }
   show("day");

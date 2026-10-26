@@ -100,6 +100,7 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(-
 .teaser .hint{position:absolute;right:14px;bottom:14px;background:rgba(255,255,255,.92);color:#163F73;font-size:13px;font-weight:700;padding:7px 12px;border-radius:999px}
 .guide{display:none;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:22px;margin-top:0}
 .guide.on{display:block}
+.guide:focus{outline:none}
 .guide h3{font-family:"Gowun Batang",serif;font-size:20px;margin:0 0 8px}
 .guide p{margin:0 0 10px}
 .guide .file{font-size:13px;color:var(--soft)}
@@ -429,8 +430,11 @@ function openDay(k){
     const go=i=>{i=Math.max(0,Math.min(N-1,i));cards.scrollTo({left:i*cards.clientWidth});mark(i)};
     pv.onclick=()=>go(cur-1);nx.onclick=()=>go(cur+1);
     cards.onscroll=()=>{const i=Math.round(cards.scrollLeft/cards.clientWidth);if(i!==cur)mark(i)};
-    cards.onclick=()=>{wrap.style.display=dots.style.display=bar.style.display="none";g.classList.add("on");document.getElementById("closeGuide").focus()};
-    document.getElementById("closeGuide").onclick=()=>{g.classList.remove("on");wrap.style.display="block";dots.style.display="flex";bar.style.display="flex"};
+    cards.onclick=()=>{wrap.style.display=dots.style.display=bar.style.display="none";g.classList.add("on");
+      const top=document.querySelector("#day .dhead");g.setAttribute("tabindex","-1");g.focus({preventScroll:true});
+      window.scrollTo({top:Math.max(0,top.getBoundingClientRect().top+window.scrollY-16)})};
+    document.getElementById("closeGuide").onclick=()=>{g.classList.remove("on");wrap.style.display="block";dots.style.display="flex";bar.style.display="flex";
+      window.scrollTo({top:Math.max(0,document.querySelector("#day .dhead").getBoundingClientRect().top+window.scrollY-16)})};
     mark(0);
     document.getElementById("saveCards").onclick=()=>openSheet(k,cards);
   }

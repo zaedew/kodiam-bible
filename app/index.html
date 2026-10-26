@@ -530,10 +530,14 @@ if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(
   const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
   if(standalone||load("kodiam-install-later",false))return;
   const box=document.getElementById("install"),btn=document.getElementById("installBtn"),txt=document.getElementById("installText");
-  const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  const ua=navigator.userAgent,ios=/iphone|ipad|ipod/i.test(ua),android=/android/i.test(ua);
+  const inapp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\/|DaumApps|everytimeApp/i.test(ua);
+  const samsung=/SamsungBrowser/i.test(ua);
   let ev=null;
-  addEventListener("beforeinstallprompt",e=>{e.preventDefault();ev=e;btn.hidden=false;box.hidden=false});
-  if(ios){txt.textContent="사파리 아래쪽의 공유 버튼을 누르고 ‘홈 화면에 추가’를 고르면 앱처럼 바로 열 수 있어요.";box.hidden=false}
+  addEventListener("beforeinstallprompt",e=>{e.preventDefault();ev=e;btn.hidden=false;txt.textContent="홈 화면에 추가하면 앱처럼 바로 열 수 있어요.";box.hidden=false});
+  if(inapp){txt.textContent=android?"지금은 다른 앱 안의 브라우저로 열려 있어요. 오른쪽 위 메뉴에서 ‘다른 브라우저로 열기’(크롬)를 누른 뒤 홈 화면에 추가해 주세요.":"지금은 다른 앱 안의 브라우저로 열려 있어요. 메뉴에서 ‘Safari로 열기’를 누른 뒤 공유 버튼에서 ‘홈 화면에 추가’를 골라 주세요.";box.hidden=false}
+  else if(ios){txt.textContent="사파리 아래쪽의 공유 버튼을 누르고 ‘홈 화면에 추가’를 고르면 앱처럼 바로 열 수 있어요.";box.hidden=false}
+  else if(android){setTimeout(()=>{if(!ev){txt.textContent=samsung?"아래쪽 메뉴(≡)를 누르고 ‘현재 페이지 추가’ → ‘홈 화면’을 고르면 앱처럼 바로 열 수 있어요.":"오른쪽 위 메뉴(⋮)를 누르고 ‘홈 화면에 추가’ 또는 ‘앱 설치’를 고르면 앱처럼 바로 열 수 있어요.";box.hidden=false}},2500)}
   btn.onclick=async()=>{if(!ev)return;ev.prompt();await ev.userChoice.catch(()=>{});ev=null;box.hidden=true};
   document.getElementById("installLater").onclick=()=>{save("kodiam-install-later",true);box.hidden=true};
 })();

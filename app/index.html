@@ -7,6 +7,9 @@
 <meta name="theme-color" content="#163F73">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="코디엠 통독">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📖</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -131,8 +134,9 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(-
 .cards{scroll-behavior:smooth}
 @media (prefers-reduced-motion: reduce){.cards{scroll-behavior:auto}}
 .arrow{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;border:0;
-  display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.9);color:#0A4DA8;
-  box-shadow:0 2px 8px rgba(10,40,80,.25);z-index:2}
+  display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.35);color:#0A4DA8;
+  -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);box-shadow:none;opacity:.8;transition:opacity .2s,background .2s;z-index:2}
+.arrow:hover,.arrow:active,.arrow:focus-visible{opacity:1;background:rgba(255,255,255,.7)}
 .arrow[hidden]{display:none}
 .arrow.prev{left:10px}.arrow.next{right:10px}
 .dots{display:flex;justify-content:center;gap:6px;margin:10px 0 2px}
@@ -153,6 +157,13 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(-
 .caphead button{background:none;border:0;color:var(--blue);font-weight:700;padding:6px 0}
 .capbox textarea{width:100%;font:inherit;font-size:13px;line-height:1.6;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--paper);color:var(--ink);resize:vertical}
 .sheet .btn{margin-top:16px;width:100%;background:var(--blue);color:#fff;border-radius:14px;padding:14px}
+
+.install{margin-top:22px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px 18px}
+.install[hidden]{display:none}
+.install p{margin:0 0 10px;font-size:14px}
+.install .btn{background:var(--blue);color:#fff;padding:10px 16px;font-size:14px;margin-right:8px}
+.install .btn[hidden]{display:none}
+.install .later{background:none;border:0;color:var(--soft);font-size:14px;padding:10px 0}
 
 /* 기록 화면 */
 .calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
@@ -226,6 +237,11 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(-
       <div class="strip" id="strip"></div>
     </div>
 
+    <div class="install" id="install" hidden>
+      <p id="installText">홈 화면에 추가하면 앱처럼 바로 열 수 있어요.</p>
+      <button class="btn" id="installBtn" hidden>홈 화면에 추가</button>
+      <button class="later" id="installLater">다음에</button>
+    </div>
     <p class="proto">코디엠교회 마중물 성경통독</p>
   </section>
 
@@ -508,6 +524,19 @@ document.getElementById("nextM").onclick=()=>{if(viewM<11){viewM++;renderCal()}}
 document.getElementById("askForm").onsubmit=e=>{e.preventDefault();name=document.getElementById("nameIn").value.trim();save("kodiam-name",name);document.getElementById("ask").classList.remove("on");greet()};
 if(!name){document.getElementById("ask").classList.add("on");setTimeout(()=>document.getElementById("nameIn").focus(),100)}
 renderHome();
+/* 웹앱 설치 안내 */
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+(function(){
+  const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
+  if(standalone||load("kodiam-install-later",false))return;
+  const box=document.getElementById("install"),btn=document.getElementById("installBtn"),txt=document.getElementById("installText");
+  const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  let ev=null;
+  addEventListener("beforeinstallprompt",e=>{e.preventDefault();ev=e;btn.hidden=false;box.hidden=false});
+  if(ios){txt.textContent="사파리 아래쪽의 공유 버튼을 누르고 ‘홈 화면에 추가’를 고르면 앱처럼 바로 열 수 있어요.";box.hidden=false}
+  btn.onclick=async()=>{if(!ev)return;ev.prompt();await ev.userChoice.catch(()=>{});ev=null;box.hidden=true};
+  document.getElementById("installLater").onclick=()=>{save("kodiam-install-later",true);box.hidden=true};
+})();
 if(SHEET_URL){fetch(SHEET_URL+(SHEET_URL.includes("?")?"&":"?")+"t="+Date.now(),{cache:"no-store"})
   .then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{const rows=parseCSV(t);if(rows.length){buildPlan(rows);if(document.getElementById("home").classList.contains("on"))renderHome()}})
   .catch(()=>{})}

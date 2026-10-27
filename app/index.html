@@ -229,6 +229,10 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .fsctl button:disabled{color:var(--line)}
 .fslab{font-size:12px;color:var(--soft);min-width:34px;text-align:center}
 
+.trackbox{background:var(--sky);border-radius:14px;padding:12px 14px;margin:-6px 0 14px;font-size:14px;line-height:1.5}
+.trackbox b{display:block;color:var(--deep);font-size:15px}
+.trackbox span{color:var(--ink)}
+
 /* 기록 화면 */
 .calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .calhead h2{margin:0;font-size:20px}
@@ -407,17 +411,60 @@ const today=new Date();today.setHours(0,0,0,0);
 const YEAR=today.getFullYear();
 
 /* ===== 구글 시트 웹에 게시(CSV) 주소 ===== */
+/* ===== 새 구조: 같은 구글 시트의 탭별 gid (브라우저 주소의 #gid= 뒤 숫자) =====
+   통독 탭: no(순번) / bible / title / word_1~3 / think / prayer  — 해마다 그대로 이어 씀
+   연도 탭: date / track / track_bible / ep / q1~t3 / outro1·2 / caption / youtube — 해마다 새로 */
+const SHEET_PUB="https://docs.google.com/spreadsheets/d/e/2PACX-1vRxQ-krT-lR5itCHyvLBu1DvGkP8yt6-zjMRHsnawc57ULwxrKrXDQYr4Qm-1gagMKlN2IuXOqS8J2y/pub";
+const TABS={
+  tongdok:"1792190309",   /* 통독 탭 gid */
+  years:{                 /* 연도 탭 gid, 해마다 한 줄 추가 */
+    2026:"901116385",
+    2027:"979740216"
+  }
+};
+/* 예전 방식(날짜별 한 탭) — 새 구조의 gid를 넣기 전까지 사용 */
 const SHEET_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vRxQ-krT-lR5itCHyvLBu1DvGkP8yt6-zjMRHsnawc57ULwxrKrXDQYr4Qm-1gagMKlN2IuXOqS8J2y/pub?gid=0&single=true&output=csv";
 const RAW=[{"date": "10.25", "bible": "", "title": "", "word_1": "", "word_2": "", "word_3": "", "think": "", "prayer": "", "ep": "", "q1": "", "t1": "", "q2": "", "t2": "", "q3": "", "t3": "", "outro1": "", "outro2": "", "caption": ""}, {"date": "10.26", "bible": "요한복음 1-3장", "title": "내려오신 생명", "word_1": "요한은 족보나 탄생 이야기 대신 태초로 거슬러 올라갑니다. 말씀이 하나님과 함께 계셨고, 그 말씀이 육신이 되어 우리 가운데 장막을 치셨습니다. 멀리서 지켜보시는 분이 아니라, 갈증 난 삶 한복판으로 들어오신 하나님입니다. 세례 요한은 예수를 가리켜 ‘세상 죄를 지고 가는 하나님의 어린 양’으로, 나다나엘은 ‘하나님의 아들, 이스라엘의 임금’으로 고백합니다.", "word_2": "가나의 혼인 잔치에서 예수는 떨어진 포도주를 가장 좋은 포도주로 바꾸십니다. 잔치가 끊긴 자리에 기쁨을 되돌리시는 첫 표적입니다. 예루살렘 성전에서는 장사하는 상을 뒤엎으시고, 헐면 사흘 만에 일으키겠다며 자기 몸을 참된 성전이라 하십니다.", "word_3": "밤에 찾아온 니고데모는 율법에 밝은 지도자였지만, 위로부터 나지 않으면 하나님 나라를 볼 수 없다는 말씀 앞에서 되묻기만 합니다. 아는 것으로는 닿을 수 없는 생명입니다. 하나님이 세상을 이처럼 사랑하사 독생자를 주셨습니다.", "think": "나는 지금 예수를 누구라고 고백하고 있습니까? 그 고백은 내 일상에서 어떻게 드러납니까?", "prayer": "코디엠교회가 수서와 일원과 항동에서 생명이 느껴지고 보여지는 공동체가 되기를 위하여.", "ep": "256", "q1": "요한은 왜 족보도|탄생도 건너뛰었을까?", "t1": "더 앞으로 가야 했습니다.", "q2": "예수는 왜 성전을|헐라고 하셨을까?", "t2": "건물 이야기가 아니었습니다.", "q3": "율법에 밝던 니고데모는|왜 못 알아들었을까?", "t3": "아는 것으로 닿는 자리가 아니었습니다.", "outro1": "오늘, 그 생명을", "outro2": "함께 맞이하시겠습니까?", "caption": "내려오신 생명|요한복음 1~3장 | 하임레시피 256||요한은 족보도 탄생도 건너뛰고 태초로 거슬러 올라갑니다.|그 말씀이 육신이 되어 우리 가운데 장막을 치셨습니다.||멀리서 지켜보시는 분이 아니었습니다.|하나님이 우리 곁으로 걸어오셨습니다.||🎧 매일 새벽 5시 30분, 하임레시피|📖 오늘의 질문 — 나는 지금 예수를 누구라고 고백하고 있습니까?||#코디엠교회 #성경통독 #하임레시피 #요한복음 #매일성경 #큐티 #말씀묵상 #새벽예배 #성경읽기 #수서동교회"}, {"date": "10.27", "bible": "요한복음 4-6장", "title": "생명의 떡", "word_1": "예수는 유대를 떠나 굳이 사마리아를 지나가십니다. 한낮에 우물을 찾아온 여인에게 먼저 물을 청하시고, 영원히 목마르지 않는 생수를 말씀하십니다. 어디서 예배할 것인가를 묻는 여인에게 예수는 장소가 아니라 영과 진리로 드리는 예배를 말씀하십니다. 감추고 싶은 삶이 드러난 자리에서 여인은 마을로 달려가 증언하는 사람이 됩니다. 이어 가나에서는 왕의 신하의 아들을 말씀 한마디로 살리십니다.", "word_2": "베데스다 못가에는 서른여덟 해 된 병자가 누워 있습니다. 넣어 줄 사람이 없다는 그에게 예수는 자리를 들고 걸으라 하십니다. 안식일이라는 이유로 갈등이 시작되고, 예수는 아버지께서 일하시니 나도 일한다고 답하십니다.", "word_3": "오천 명을 먹이신 다음 날, 사람들은 다시 떡을 찾아 몰려옵니다. 예수는 썩을 양식이 아니라 영생하도록 있는 양식을 구하라 하시며, 자신이 생명의 떡이라 하십니다. 그 말씀에 많은 제자가 떠나갑니다.", "think": "“영생의 말씀이 주께 있사오니 우리가 누구에게로 가오리이까”라는 고백이 나에게 의미하는 바는 무엇입니까?", "prayer": "코디엠교회의 말씀 사역 위에 성령이 함께하셔서, 날마다 생명의 말씀이 풍성히 흘러나오는 공동체가 되기를 위하여.", "ep": "257", "q1": "예수는 왜 먼저|물을 달라고 하셨을까?", "t1": "목이 마르셨기 때문만은 아니었습니다.", "q2": "안식일에 고치신|이유는 무엇이었을까?", "t2": "하필 그날이어야 했습니다.", "q3": "제자들은 왜|떠나지 않았을까?", "t3": "다 이해해서가 아니었습니다.", "outro1": "오늘, 그 자리를", "outro2": "함께 지키시겠습니까?", "caption": "생명의 떡|요한복음 4~6장 | 하임레시피 257||목마른 여인에게 먼저 물을 청하시고,|서른여덟 해 누워 있던 사람을 일으키시고,|오천 명을 배불리 먹이셨습니다.||그런데 다음 날 다시 떡을 찾아온 이들에게 말씀하십니다.|썩을 양식이 아니라 영생하도록 있는 양식을 구하라고.||떡을 구하다 생명을 놓치지 마십시오.||🎧 매일 새벽 5시 30분, 하임레시피|📖 오늘의 질문 — \"영생의 말씀이 주께 있사오니 우리가 누구에게로 가오리이까\"라는 고백이 나에게 의미하는 바는 무엇입니까?||#코디엠교회 #성경통독 #하임레시피 #요한복음 #매일성경 #큐티 #말씀묵상 #새벽예배 #성경읽기 #수서동교회"}];
 function countCh(t){let n=0;t.split(",").forEach(p=>{const m=p.match(/(\d+)\s*(?:[-–]\s*(\d+))?\s*장/);if(m)n+=m[2]?(+m[2]-+m[1]+1):1});return n}
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const PLAN={},SPECIAL={};let READING=[];
+function dateKeyOf(str,defY){
+  const parts=String(str||"").trim().replace(/[-/]/g,".").split(".").map(x=>x.trim()).filter(Boolean).map(Number);
+  let y,m,d;if(parts.length>=3)[y,m,d]=parts;else{[m,d]=parts;y=defY}
+  if(!y||!m||!d||m>12||d>31)return null;return `${y}-${pad(m)}-${pad(d)}`;
+}
+/* 통독 순번 + 연도별 방송 정보를 합쳐 날짜별 계획을 만듦.
+   날짜 = 그해 1월 1일부터 일요일을 빼고 센 n번째 날 → 통독 n일차 */
+function buildPlan2(tong,yearTabs){
+  Object.keys(PLAN).forEach(k=>delete PLAN[k]);Object.keys(SPECIAL).forEach(k=>delete SPECIAL[k]);
+  const byNo={};tong.forEach(r=>{const n=parseInt(r.no,10);if(n)byNo[n]=r});
+  const years=new Set([YEAR-1,YEAR,...Object.keys(yearTabs).map(Number)]);
+  years.forEach(y=>{
+    const extra={};(yearTabs[y]||[]).forEach(r=>{const dk=dateKeyOf(r.date,y);if(dk)extra[dk]=r});
+    let n=0;
+    for(let d=new Date(y,0,1);d.getFullYear()===y;d.setDate(d.getDate()+1)){
+      const dk=key(d),ex=extra[dk]||{};
+      if(d.getDay()===0){if(ex.youtube)SPECIAL[dk]=ex.youtube;continue}
+      n++;const t=byNo[n];if(!t||!t.bible)continue;
+      const r={...t,no:n};
+      Object.entries(ex).forEach(([k,v])=>{if(k!=="date"&&v!==""&&v!=null)r[k]=v});
+      r.prayer=(r.prayer||"").replace(/^•\s*/,"");
+      PLAN[dk]={...r,label:t.bible.replace(/(\d)-(\d)/g,"$1–$2"),count:countCh(t.bible)};
+    }
+  });
+  READING=Object.keys(PLAN).sort();
+}
 function buildPlan(rows){
   Object.keys(PLAN).forEach(k=>delete PLAN[k]);Object.keys(SPECIAL).forEach(k=>delete SPECIAL[k]);
-  rows.forEach(r=>{if(!r||!r.date)return;const [m,d]=String(r.date).trim().split(".").map(Number);if(!m||!d)return;
-    if(!r.bible){if(r.youtube)SPECIAL[`${YEAR}-${pad(m)}-${pad(d)}`]=r.youtube;return}
+  rows.forEach(r=>{if(!r||!r.date)return;
+    /* 날짜: 2026.10.26 (연도 포함) 또는 예전 형식 10.26 (2026년으로 봄) */
+    const parts=String(r.date).trim().replace(/[-/]/g,".").split(".").map(x=>x.trim()).filter(Boolean).map(Number);
+    let y,m,d;if(parts.length>=3)[y,m,d]=parts;else{[m,d]=parts;y=2026}
+    if(!y||!m||!d||m>12||d>31)return;
+    const dk=`${y}-${pad(m)}-${pad(d)}`;
+    if(!r.bible){if(r.youtube)SPECIAL[dk]=r.youtube;return}
     r.prayer=(r.prayer||"").replace(/^•\s*/,"");
-    PLAN[`${YEAR}-${pad(m)}-${pad(d)}`]={...r,label:r.bible.replace(/(\d)-(\d)/g,"$1–$2"),count:countCh(r.bible)}});
+    PLAN[dk]={...r,label:r.bible.replace(/(\d)-(\d)/g,"$1–$2"),count:countCh(r.bible)}});
   READING=Object.keys(PLAN).sort();
 }
 function parseCSV(t){
@@ -513,7 +560,7 @@ function greet(){
   document.getElementById("greetName").textContent=displayName?`${displayName}님, 오늘도 함께 읽어요`:"오늘도 함께 읽어요";
 }
 function progress(){
-  let c=0;read.forEach(k=>{if(PLAN[k])c+=PLAN[k].count});
+  let c=0;read.forEach(k=>{if(PLAN[k]&&k.startsWith(YEAR+"-"))c+=PLAN[k].count});
   const p=c/TOTAL;
   document.getElementById("pct").textContent=(p*100<10&&p>0?(p*100).toFixed(1):Math.round(p*100))+"%";
   document.getElementById("chap").textContent=`올해 ${TOTAL.toLocaleString()}장 중 ${c.toLocaleString()}장을 읽었어요`;
@@ -542,7 +589,7 @@ function renderToday(){
     </div>
     ${!done&&hasMissed()?`<p class="together">지난 날은 그대로 두셔도 괜찮아요. 오늘 본문부터 함께 읽어요.</p>`:""}`;
 }
-function hasMissed(){const k=key(today);return READING.some(r=>r<k&&!read.has(r))}
+function hasMissed(){const k=key(today);return READING.some(r=>r.startsWith(YEAR+"-")&&r<k&&!read.has(r))}
 function stripHTML(base,sel){
   const start=new Date(base);start.setDate(base.getDate()-base.getDay());const tk=key(today);let h="";
   for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const k=key(d);
@@ -579,7 +626,8 @@ function openDay(k){
       ${ytLink("하임레시피 특별판 듣기",SPECIAL[k])}</div>`;
   }else{
     const done=read.has(k);
-    body.innerHTML=`<div class="dhead"><small>${fmt(d)}</small><h1>${p.label}</h1></div>
+    body.innerHTML=`<div class="dhead"><small>${fmt(d)}${p.no?` · 통독 ${p.no}일차`:""}</small><h1>${p.label}</h1></div>
+      ${isSpecial(p.track)?`<div class="trackbox"><b>${esc(p.track)}</b><span>오늘의 하임레시피는 ${esc(p.track_bible||"특별 묵상 본문")}을 따라가요</span></div>`:""}
       <div class="cardwrap" id="cardwrap">
         <div class="cards" id="cards" aria-label="티저 카드 4장"></div>
         <button class="arrow prev" id="prevCard" aria-label="이전 카드" hidden><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -670,7 +718,9 @@ function wrapT(c,t,mw){const L=[];let cur="";for(const ch of t){if(ch==="\n"){L.
 function block(c,t,font,x,y,mw,lh,fill){c.font=font;c.fillStyle=fill;for(const ln of wrapT(c,t,mw)){c.fillText(ln,x,y);y+=lh}return y}
 function rule(c,x1,y1,x2,y2,col,w){c.strokeStyle=col;c.lineWidth=w;c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke()}
 function frame(c,bg,ln){c.fillStyle=bg;c.fillRect(0,0,1080,1080);c.strokeStyle=ln;c.lineWidth=2;c.strokeRect(55,55,970,970);c.textBaseline="top"}
-const head=ep=>`코디엠 성경통독 · 하임레시피${ep?" "+ep:""}`;
+let CARD_TRACK="";
+const isSpecial=t=>t&&t.trim()&&t.trim()!=="통독";
+const head=ep=>`${isSpecial(CARD_TRACK)?CARD_TRACK.trim():"코디엠 성경통독"} · 하임레시피${ep?" "+ep:""}`;
 function hook(c,ep,no,q,tw,dark){
   const [bg,fg,acc,ln,foot]=dark?[NAVY,CREAM,SOFT,RULED,SOFT]:[CREAM,NAVY,NAVY,LINE,FOOT];
   frame(c,bg,ln);
@@ -694,8 +744,10 @@ function outro(c,ep,bible,l1,l2,when="매일 새벽 5시 30분"){
 }
 const br=t=>(t||"").replace(/\|/g,"\n");
 async function drawCards(p,box){
-  const qs=[[p.q1,p.t1],[p.q2,p.t2],[p.q3,p.t3]],bible=p.bible.replace(/(\d)-(\d)/g,"$1~$2");
-  const all=qs.flat().join("")+p.outro1+p.outro2+bible+"코디엠 성경통독하임레시피Q123@kodiam_bible매일새벽5시30분오늘본문";
+  CARD_TRACK=p.track||"";
+  const src=isSpecial(p.track)&&p.track_bible?p.track_bible:p.bible;
+  const qs=[[p.q1,p.t1],[p.q2,p.t2],[p.q3,p.t3]],bible=src.replace(/(\d)-(\d)/g,"$1~$2");
+  const all=qs.flat().join("")+p.outro1+p.outro2+bible+(p.track||"")+"코디엠 성경통독하임레시피Q123@kodiam_bible매일새벽5시30분오늘본문";
   try{await Promise.all([document.fonts.load(`700 80px 'Noto Serif KR'`,all),document.fonts.load(`300 72px 'Noto Sans KR'`,"Q123"),document.fonts.load(`400 26px 'Noto Sans KR'`,all)])}catch(e){}
   box.innerHTML="";
   qs.forEach(([q,t],i)=>{const cv=document.createElement("canvas");cv.width=cv.height=1080;cv.setAttribute("aria-label",`Q${i+1} ${(q||"").replace(/\|/g," ")}`);hook(cv.getContext("2d"),p.ep,i+1,br(q),t||"",i===0);box.appendChild(cv)});
@@ -743,11 +795,11 @@ function renderCal(){
 }
 let listAll=false;
 function renderList(){
-  const months=listAll?[...new Set(READING.map(k=>fromKey(k).getMonth()))]:[viewM];
+  const months=listAll?[...new Set(READING.filter(k=>k.startsWith(YEAR+"-")).map(k=>fromKey(k).getMonth()))]:[viewM];
   document.getElementById("listTitle").textContent=listAll?`${YEAR}년 통독표`:`${viewM+1}월 통독표`;
   document.getElementById("listAll").textContent=listAll?"이 달만 보기":"올해 전체 보기";
   const tk=key(today);let h="";
-  months.forEach(m=>{const ks=READING.filter(k=>fromKey(k).getMonth()===m);
+  months.forEach(m=>{const ks=READING.filter(k=>k.startsWith(YEAR+"-")&&fromKey(k).getMonth()===m);
     if(listAll)h+=`<h3 class="pmonth">${m+1}월</h3>`;
     if(!ks.length){h+=`<p class="pempty">이 달의 통독표는 아직 시트에 없어요.</p>`;return}
     ks.forEach(k=>{const d=fromKey(k),p=PLAN[k],r=read.has(k);
@@ -942,7 +994,14 @@ if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(
 })();
 
 /* 구글 시트 실시간 페치 */
-if(SHEET_URL){fetch(SHEET_URL+(SHEET_URL.includes("?")?"&":"?")+"t="+Date.now(),{cache:"no-store"})
+const getCSV=u=>fetch(u+(u.includes("?")?"&":"?")+"t="+Date.now(),{cache:"no-store"}).then(r=>{if(!r.ok)throw 0;return r.text()}).then(parseCSV);
+const tabURL=g=>`${SHEET_PUB}?gid=${g}&single=true&output=csv`;
+if(TABS.tongdok){
+  const ys=Object.entries(TABS.years).filter(([,g])=>g!=="");
+  Promise.all([getCSV(tabURL(TABS.tongdok)),...ys.map(([,g])=>getCSV(tabURL(g)).catch(()=>[]))])
+    .then(([tong,...yrs])=>{if(!tong.length)return;const yt={};ys.forEach(([y],i)=>yt[y]=yrs[i]);buildPlan2(tong,yt);refreshViews()})
+    .catch(()=>{});
+}else if(SHEET_URL){fetch(SHEET_URL+(SHEET_URL.includes("?")?"&":"?")+"t="+Date.now(),{cache:"no-store"})
   .then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{const rows=parseCSV(t);if(rows.length){buildPlan(rows);if(document.getElementById("home").classList.contains("on"))renderHome()}})
   .catch(()=>{})}
 </script>

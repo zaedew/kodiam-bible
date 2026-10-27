@@ -20,6 +20,9 @@
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
+<!-- Kakao SDK -->
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"></script>
+
 <style>
 :root{
   --paper:#F6F9FC; --surface:#FFFFFF; --ink:#132C48; --soft:#5A7390;
@@ -60,9 +63,11 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(-
 .hello small{display:block;color:var(--soft);font-size:14px}
 .hello h1{margin:2px 0 0;font-size:26px;line-height:1.35;font-weight:700}
 .auth-wrap{flex:none;margin-top:4px}
-.auth-btn{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:6px 12px;font-size:13px;font-weight:500;color:var(--blue)}
+.auth-group{display:flex;gap:6px}
+.auth-btn{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:6px 10px;font-size:12px;font-weight:500;color:var(--blue)}
+.auth-btn.kakao{background:#FEE500;border-color:#FEE500;color:#191919}
 .auth-profile{display:none;align-items:center;gap:8px;font-size:13px}
-.auth-profile b{color:var(--ink);max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.auth-profile b{color:var(--ink);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .auth-profile button{background:none;border:0;color:var(--soft);font-size:12px;text-decoration:underline;padding:0}
 
 .vessel-wrap{display:flex;gap:18px;align-items:center;background:var(--surface);
@@ -262,7 +267,10 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         <h1 id="greetName">함께 읽어요</h1>
       </div>
       <div class="auth-wrap">
-        <button id="loginBtn" class="auth-btn">동기화 로그인</button>
+        <div id="loginGroup" class="auth-group">
+          <button id="loginBtn" class="auth-btn">구글 로그인</button>
+          <button id="kakaoLoginBtn" class="auth-btn kakao">카카오 로그인</button>
+        </div>
         <div id="userProfile" class="auth-profile">
           <b id="userNameTxt"></b>
           <button id="logoutBtn">로그아웃</button>
@@ -413,7 +421,7 @@ function saveAnswer(k,text){
   pushToCloud();
 }
 
-/* ---------- Firebase 초기화 및 변수 선언 (상단 배치) ---------- */
+/* ---------- Firebase & Kakao 초기화 ---------- */
 const firebaseConfig = {
   apiKey: "AIzaSyD43VjxxR4yo8e8wBiFguZHzTSt4Fde6LQ",
   authDomain: "kodiam-bible.firebaseapp.com",
@@ -425,18 +433,41 @@ const firebaseConfig = {
 
 try {
   firebase.initializeApp(firebaseConfig);
-} catch(e) {
-  console.log("Firebase already initialized or error", e);
-}
+} catch(e) {}
 const auth = firebase.auth();
 const db = firebase.firestore();
-let currentUser = null;
+
+// ★ 여기에 복사하신 카카오 JavaScript 키를 따옴표 안에 넣어주세요 ★
+const KAKAO_JS_KEY = "726eaaf830173a8441fa3d1b38fbd124";
+
+if (window.Kakao && !Kakao.isInitialized() && KAKAO_JS_KEY !== "여기에_카카오_자바스크립트_키_입력") {
+  Kakao.init(KAKAO_JS_KEY);
+}
+
+// 통합 유저 상태 관리
+let appUser = load("kodiam-auth-user", null);
+
+function updateAuthUI() {
+  const loginGroup = document.getElementById("loginGroup");
+  const userProfile = document.getElementById("userProfile");
+  const userNameTxt = document.getElementById("userNameTxt");
+
+  if (appUser) {
+    if (loginGroup) loginGroup.style.display = "none";
+    if (userProfile) userProfile.style.display = "flex";
+    if (userNameTxt) userNameTxt.textContent = `${appUser.name}`;
+  } else {
+    if (loginGroup) loginGroup.style.display = "flex";
+    if (userProfile) userProfile.style.display = "none";
+  }
+  greet();
+}
 
 /* ---------- 홈 ---------- */
 function greet(){
   const h=new Date().getHours();
   document.getElementById("greetTime").textContent=h<5?"고요한 새벽이에요":h<11?"좋은 아침이에요":h<17?"평안한 오후예요":"오늘 하루도 수고 많으셨어요";
-  const displayName=currentUser?(currentUser.displayName||name):name;
+  const displayName = appUser ? appUser.name : name;
   document.getElementById("greetName").textContent=displayName?`${displayName}님, 오늘도 함께 읽어요`:"오늘도 함께 읽어요";
 }
 function progress(){
@@ -687,91 +718,77 @@ function renderList(){
 }
 document.getElementById("listAll").onclick=()=>{listAll=!listAll;renderList()};
 
-/* ---------- 공통 인터랙션 (로그인/로그아웃 클릭 확실하게 가로채기) ---------- */
-function show(id){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.id===id));window.scrollTo(0,0);if(id==="home")renderHome();if(id==="record")renderCal()}
-
-document.addEventListener("click",e=>{
-  // 1. 로그인 버튼 클릭 감지
-  if(e.target && e.target.id === "loginBtn"){
-    const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider)
-      .then((res)=>{
-        alert(`${res.user.displayName || "성도"}님, 환영합니다! 동기화가 시작됩니다.`);
-      })
-      .catch((error)=>{
-        alert("로그인 안내: " + error.message);
-      });
+/* ---------- 통합 로그인 / 로그아웃 동작 함수 ---------- */
+function loginWithKakao() {
+  if (!window.Kakao) {
+    alert("카카오 SDK가 준비되지 않았습니다.");
     return;
   }
+  if (!Kakao.isInitialized()) {
+    alert("카카오 JavaScript 키가 설정되지 않았습니다. index.html의 KAKAO_JS_KEY를 확인해 주세요.");
+    return;
+  }
+  Kakao.Auth.login({
+    success: function() {
+      Kakao.API.request({
+        url: '/v2/user/me',
+        success: async function(res) {
+          const kakaoId = `kakao_${res.id}`;
+          const kakaoNick = (res.kakao_account && res.kakao_account.profile) ? res.kakao_account.profile.nickname : "성도님";
+          
+          appUser = {
+            uid: kakaoId,
+            name: kakaoNick,
+            provider: "kakao"
+          };
+          save("kodiam-auth-user", appUser);
+          updateAuthUI();
+          await syncFromCloud(appUser.uid);
+          alert(`${kakaoNick}님, 환영합니다! 카카오 계정으로 동기화됩니다.`);
+        },
+        fail: function(error) {
+          alert("카카오 계정 정보를 가져오지 못했습니다: " + JSON.stringify(error));
+        }
+      });
+    },
+    fail: function(err) {
+      alert("카카오 로그인 실패: " + JSON.stringify(err));
+    }
+  });
+}
 
-  // 2. 로그아웃 버튼 클릭 감지
-  if(e.target && e.target.id === "logoutBtn"){
-    if(confirm("로그아웃하시겠습니까? 기기에 저장된 기록은 유지됩니다.")){
+function handleLogout() {
+  if (confirm("로그아웃하시겠습니까? 기기에 저장된 기록은 유지됩니다.")) {
+    if (appUser && appUser.provider === "kakao" && window.Kakao && Kakao.Auth.getAccessToken()) {
+      Kakao.Auth.logout(()=>{});
+    }
+    if (auth.currentUser) {
       auth.signOut();
     }
-    return;
+    appUser = null;
+    save("kodiam-auth-user", null);
+    updateAuthUI();
   }
+}
 
-  const o=e.target.closest("[data-open]"),g=e.target.closest("[data-go]"),t=e.target.closest("[data-toggle]");
-  if(t){
-    const k=t.dataset.toggle;
-    read.has(k)?read.delete(k):read.add(k);
-    save("kodiam-read",[...read]);
-    pushToCloud();
-    if(document.getElementById("day").classList.contains("on"))openDay(k);else renderHome();
-    return;
-  }
-  if(o){openDay(o.dataset.open);return}
-  if(g){show(g.dataset.go)}
-});
-
-document.getElementById("prevM").onclick=()=>{if(viewM>0){viewM--;renderCal()}};
-document.getElementById("nextM").onclick=()=>{if(viewM<11){viewM++;renderCal()}};
-document.getElementById("askForm").onsubmit=e=>{e.preventDefault();name=document.getElementById("nameIn").value.trim();save("kodiam-name",name);document.getElementById("ask").classList.remove("on");greet()};
-if(!name){document.getElementById("ask").classList.add("on");setTimeout(()=>document.getElementById("nameIn").focus(),100)}
-renderHome();
-
-/* ---------- PWA 홈 화면 추가 ---------- */
-if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
-(function(){
-  const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
-  if(standalone||load("kodiam-install-later",false))return;
-  const box=document.getElementById("install"),btn=document.getElementById("installBtn"),txt=document.getElementById("installText");
-  const ua=navigator.userAgent,ios=/iphone|ipad|ipod/i.test(ua),android=/android/i.test(ua);
-  const inapp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\/|DaumApps|everytimeApp/i.test(ua);
-  const samsung=/SamsungBrowser/i.test(ua);
-  let ev=null;
-  addEventListener("beforeinstallprompt",e=>{e.preventDefault();ev=e;btn.hidden=false;txt.textContent="홈 화면에 추가하면 앱처럼 바로 열 수 있어요.";box.hidden=false});
-  if(inapp){txt.textContent=android?"지금은 다른 앱 안의 브라우저로 열려 있어요. 오른쪽 위 메뉴에서 ‘다른 브라우저로 열기’(크롬)를 누른 뒤 홈 화면에 추가해 주세요.":"지금은 다른 앱 안의 브라우저로 열려 있어요. 메뉴에서 ‘Safari로 열기’를 누른 뒤 공유 버튼에서 ‘홈 화면에 추가’를 골라 주세요.";box.hidden=false}
-  else if(ios){txt.textContent="사파리 아래쪽의 공유 버튼을 누르고 ‘홈 화면에 추가’를 고르면 앱처럼 바로 열 수 있어요.";box.hidden=false}
-  else if(android){setTimeout(()=>{if(!ev){txt.textContent=samsung?"아래쪽 메뉴(≡)를 누르고 ‘현재 페이지 추가’ → ‘홈 화면’을 고르면 앱처럼 바로 열 수 있어요.":"오른쪽 위 메뉴(⋮)를 누르고 ‘홈 화면에 추가’ 또는 ‘앱 설치’를 고르면 앱처럼 바로 열 수 있어요.";box.hidden=false}},2500)}
-  btn.onclick=async()=>{if(!ev)return;ev.prompt();await ev.userChoice.catch(()=>{});ev=null;box.hidden=true};
-  document.getElementById("installLater").onclick=()=>{save("kodiam-install-later",true);box.hidden=true};
-})();
-
-/* 구글 시트 실시간 페치 */
-if(SHEET_URL){fetch(SHEET_URL+(SHEET_URL.includes("?")?"&":"?")+"t="+Date.now(),{cache:"no-store"})
-  .then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{const rows=parseCSV(t);if(rows.length){buildPlan(rows);if(document.getElementById("home").classList.contains("on"))renderHome()}})
-  .catch(()=>{})}
-
-/* ---------- 로그인 상태 감지 및 동기화 ---------- */
+// 구글 로그인 감지
 auth.onAuthStateChanged(async (user) => {
-  const loginBtn = document.getElementById("loginBtn");
-  const userProfile = document.getElementById("userProfile");
-  const userNameTxt = document.getElementById("userNameTxt");
-
   if (user) {
-    currentUser = user;
-    if (loginBtn) loginBtn.style.display = "none";
-    if (userProfile) userProfile.style.display = "flex";
-    if (userNameTxt) userNameTxt.textContent = user.displayName || "성도님";
+    appUser = {
+      uid: user.uid,
+      name: user.displayName || "성도님",
+      provider: "google"
+    };
+    save("kodiam-auth-user", appUser);
+    updateAuthUI();
     await syncFromCloud(user.uid);
+  } else if (appUser && appUser.provider === "google") {
+    appUser = null;
+    save("kodiam-auth-user", null);
+    updateAuthUI();
   } else {
-    currentUser = null;
-    if (loginBtn) loginBtn.style.display = "block";
-    if (userProfile) userProfile.style.display = "none";
+    updateAuthUI();
   }
-  greet();
 });
 
 // 클라우드 -> 로컬 동기화
@@ -800,7 +817,7 @@ async function syncFromCloud(uid) {
 
 // 로컬 -> 클라우드 백업
 async function pushToCloud() {
-  if (!currentUser) return;
+  if (!appUser) return;
   try {
     const answers = {};
     for (let i = 0; i < localStorage.length; i++) {
@@ -810,8 +827,9 @@ async function pushToCloud() {
         answers[dateKey] = localStorage.getItem(keyName);
       }
     }
-    await db.collection("users").doc(currentUser.uid).set({
-      name: currentUser.displayName,
+    await db.collection("users").doc(appUser.uid).set({
+      name: appUser.name,
+      provider: appUser.provider,
       readList: [...read],
       answers: answers,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -820,6 +838,78 @@ async function pushToCloud() {
     console.error("클라우드 저장 실패:", e);
   }
 }
+
+/* ---------- 공통 인터랙션 ---------- */
+function show(id){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.id===id));window.scrollTo(0,0);if(id==="home")renderHome();if(id==="record")renderCal()}
+
+document.addEventListener("click", e => {
+  // 구글 로그인
+  if (e.target && e.target.id === "loginBtn") {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider)
+      .then((res)=>{
+        alert(`${res.user.displayName || "성도"}님, 환영합니다! 동기화가 시작됩니다.`);
+      })
+      .catch((error)=>{
+        alert("구글 로그인 안내: " + error.message);
+      });
+    return;
+  }
+
+  // 카카오 로그인
+  if (e.target && e.target.id === "kakaoLoginBtn") {
+    loginWithKakao();
+    return;
+  }
+
+  // 로그아웃
+  if (e.target && e.target.id === "logoutBtn") {
+    handleLogout();
+    return;
+  }
+
+  const o=e.target.closest("[data-open]"),g=e.target.closest("[data-go]"),t=e.target.closest("[data-toggle]");
+  if(t){
+    const k=t.dataset.toggle;
+    read.has(k)?read.delete(k):read.add(k);
+    save("kodiam-read",[...read]);
+    pushToCloud();
+    if(document.getElementById("day").classList.contains("on"))openDay(k);else renderHome();
+    return;
+  }
+  if(o){openDay(o.dataset.open);return}
+  if(g){show(g.dataset.go)}
+});
+
+document.getElementById("prevM").onclick=()=>{if(viewM>0){viewM--;renderCal()}};
+document.getElementById("nextM").onclick=()=>{if(viewM<11){viewM++;renderCal()}};
+document.getElementById("askForm").onsubmit=e=>{e.preventDefault();name=document.getElementById("nameIn").value.trim();save("kodiam-name",name);document.getElementById("ask").classList.remove("on");greet()};
+if(!name){document.getElementById("ask").classList.add("on");setTimeout(()=>document.getElementById("nameIn").focus(),100)}
+renderHome();
+updateAuthUI();
+
+/* ---------- PWA 홈 화면 추가 ---------- */
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+(function(){
+  const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
+  if(standalone||load("kodiam-install-later",false))return;
+  const box=document.getElementById("install"),btn=document.getElementById("installBtn"),txt=document.getElementById("installText");
+  const ua=navigator.userAgent,ios=/iphone|ipad|ipod/i.test(ua),android=/android/i.test(ua);
+  const inapp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\/|DaumApps|everytimeApp/i.test(ua);
+  const samsung=/SamsungBrowser/i.test(ua);
+  let ev=null;
+  addEventListener("beforeinstallprompt",e=>{e.preventDefault();ev=e;btn.hidden=false;txt.textContent="홈 화면에 추가하면 앱처럼 바로 열 수 있어요.";box.hidden=false});
+  if(inapp){txt.textContent=android?"지금은 다른 앱 안의 브라우저로 열려 있어요. 오른쪽 위 메뉴에서 ‘다른 브라우저로 열기’(크롬)를 누른 뒤 홈 화면에 추가해 주세요.":"지금은 다른 앱 안의 브라우저로 열려 있어요. 메뉴에서 ‘Safari로 열기’를 누른 뒤 공유 버튼에서 ‘홈 화면에 추가’를 골라 주세요.";box.hidden=false}
+  else if(ios){txt.textContent="사파리 아래쪽의 공유 버튼을 누르고 ‘홈 화면에 추가’를 고르면 앱처럼 바로 열 수 있어요.";box.hidden=false}
+  else if(android){setTimeout(()=>{if(!ev){txt.textContent=samsung?"아래쪽 메뉴(≡)를 누르고 ‘현재 페이지 추가’ → ‘홈 화면’을 고르면 앱처럼 바로 열 수 있어요.":"오른쪽 위 메뉴(⋮)를 누르고 ‘홈 화면에 추가’ 또는 ‘앱 설치’를 고르면 앱처럼 바로 열 수 있어요.";box.hidden=false}},2500)}
+  btn.onclick=async()=>{if(!ev)return;ev.prompt();await ev.userChoice.catch(()=>{});ev=null;box.hidden=true};
+  document.getElementById("installLater").onclick=()=>{save("kodiam-install-later",true);box.hidden=true};
+})();
+
+/* 구글 시트 실시간 페치 */
+if(SHEET_URL){fetch(SHEET_URL+(SHEET_URL.includes("?")?"&":"?")+"t="+Date.now(),{cache:"no-store"})
+  .then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{const rows=parseCSV(t);if(rows.length){buildPlan(rows);if(document.getElementById("home").classList.contains("on"))renderHome()}})
+  .catch(()=>{})}
 </script>
 </body>
 </html>

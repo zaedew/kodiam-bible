@@ -69,6 +69,9 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(-
 .lgmsg{margin:12px 0 0!important;font-size:13px!important;color:var(--deep)!important}
 .lgmsg:empty{display:none}
 .auth-profile{display:none;align-items:center;gap:8px;font-size:13px}
+.auth-btn.ok{background:var(--sky);border-color:var(--sky);color:var(--deep);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.auth-pending{font-size:12px;color:var(--soft);padding:6px 4px;display:inline-block}
+.sheet .in>b,#acctName{color:var(--ink)}
 .auth-profile b{color:var(--ink);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .auth-profile button{background:none;border:0;color:var(--soft);font-size:12px;text-decoration:underline;padding:0}
 
@@ -272,9 +275,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
         <div id="loginGroup" class="auth-group">
           <button id="openLogin" class="auth-btn">기록 백업</button>
         </div>
+        <span id="authPending" class="auth-pending" style="display:none" aria-live="polite">로그인 확인 중…</span>
         <div id="userProfile" class="auth-profile">
-          <b id="userNameTxt"></b>
-          <button id="logoutBtn">로그아웃</button>
+          <button id="profileBtn" class="auth-btn ok"><span id="userNameTxt"></span>님 백업 중 ✓</button>
         </div>
       </div>
     </header>
@@ -371,6 +374,15 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   </div>
 </div>
 
+<div class="sheet" id="acctSheet" role="dialog" aria-label="기록 백업 상태">
+  <div class="in">
+    <h2>기록이 백업되고 있어요</h2>
+    <p><b id="acctName"></b>님의 통독 기록과 묵상이 <span id="acctProv"></span> 계정으로 안전하게 보관되고 있어요. 다른 휴대폰이나 컴퓨터에서도 같은 계정으로 로그인하면 이어서 쓸 수 있고, 기록은 본인만 볼 수 있어요.</p>
+    <button class="btn" id="acctClose">확인</button>
+    <button class="btn lgc" id="logoutBtn">로그아웃</button>
+  </div>
+</div>
+
 <div class="ask" id="ask">
   <form id="askForm">
     <h2>반가워요</h2>
@@ -452,6 +464,11 @@ try{
 }catch(e){auth=null;db=null}
 
 let appUser = load("kodiam-auth-user", null);
+/* 카카오·구글에서 돌아오는 중인지 (화면 전환 로그인) */
+const _pend = load("kodiam-login-pending", false);
+let authPending = !!_pend && (typeof _pend !== "number" || Date.now() - _pend < 5*60*1000);
+function setPending(v){authPending=v;save("kodiam-login-pending",v?Date.now():false);if(typeof updateAuthUI==="function")updateAuthUI()}
+
 /* 예전 방식(kakao_번호)으로 저장된 로그인 정보는 정리 */
 if(appUser&&String(appUser.uid||"").startsWith("kakao_")){appUser=null;save("kodiam-auth-user",null)}
 
@@ -460,7 +477,9 @@ function updateAuthUI() {
   const userProfile = document.getElementById("userProfile");
   const userNameTxt = document.getElementById("userNameTxt");
 
-  if (!auth) {
+  const pend = document.getElementById("authPending");
+  if (pend) pend.style.display = (auth && authPending && !appUser) ? "inline-block" : "none";
+  if (!auth || (authPending && !appUser)) {
     if (loginGroup) loginGroup.style.display = "none";
     if (userProfile) userProfile.style.display = "none";
   } else if (appUser) {
@@ -751,12 +770,15 @@ async function login(kind){
   const provider=kind==="kakao"?new firebase.auth.OAuthProvider(KAKAO_PROVIDER):new firebase.auth.GoogleAuthProvider();
   if(kind==="kakao")provider.addScope("openid");
   loginMsg("로그인 창을 여는 중이에요…");
+  setPending(true);
   try{
     if(IN_APP||STANDALONE||IOS){await auth.signInWithRedirect(provider);return}
     await finishLogin(await auth.signInWithPopup(provider));
+    setPending(false);
   }catch(err){
+    setPending(false);
     if(err&&(err.code==="auth/popup-blocked"||err.code==="auth/operation-not-supported-in-this-environment")){
-      try{await auth.signInWithRedirect(provider);return}catch(e2){err=e2}
+      try{setPending(true);await auth.signInWithRedirect(provider);return}catch(e2){setPending(false);err=e2}
     }
     if(err&&err.code==="auth/popup-closed-by-user"){loginMsg("");return}
     if(err&&err.code==="auth/account-exists-with-different-credential"){loginMsg("같은 이메일로 다른 방식의 로그인이 이미 있어요. 처음 쓰셨던 방법으로 로그인해 주세요.");return}
@@ -774,9 +796,10 @@ function handleLogout(){
   appUser=null;save("kodiam-auth-user",null);updateAuthUI();
 }
 if(auth){
-  auth.getRedirectResult().then(finishLogin).catch(err=>{if(err&&err.code)console.error(err)});
+  auth.getRedirectResult().then(finishLogin).catch(err=>{if(err&&err.code)console.error(err)}).finally(()=>setPending(false));
+  setTimeout(()=>{if(authPending)setPending(false)},15000);
   auth.onAuthStateChanged(user=>{
-    if(user)setUser(user,user.displayName);
+    if(user){setUser(user,user.displayName);if(authPending)setPending(false)}
     else if(appUser){appUser=null;save("kodiam-auth-user",null);updateAuthUI()}
     else updateAuthUI();
   });
@@ -845,10 +868,15 @@ document.addEventListener("click", e => {
   const lg = e.target.closest("[data-login]");
   if (lg) { login(lg.dataset.login); return; }
 
-  // 로그아웃
-  if (e.target && e.target.id === "logoutBtn") {
-    handleLogout();
-    return;
+  if (e.target.closest("#profileBtn")) {
+    document.getElementById("acctName").textContent = appUser ? appUser.name : "";
+    document.getElementById("acctProv").textContent = appUser && appUser.provider === "kakao" ? "카카오" : "구글";
+    document.getElementById("acctSheet").classList.add("on"); return;
+  }
+  if (e.target.closest("#acctClose")) { document.getElementById("acctSheet").classList.remove("on"); return; }
+  if (e.target.closest("#logoutBtn")) {
+    document.getElementById("acctSheet").classList.remove("on");
+    handleLogout(); return;
   }
 
   const o=e.target.closest("[data-open]"),g=e.target.closest("[data-go]"),t=e.target.closest("[data-toggle]");

@@ -14,6 +14,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@700&display=swap" rel="stylesheet">
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 <style>
 :root{
   --paper:#F6F9FC; --surface:#FFFFFF; --ink:#132C48; --soft:#5A7390;
@@ -645,6 +649,115 @@ if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(
 if(SHEET_URL){fetch(SHEET_URL+(SHEET_URL.includes("?")?"&":"?")+"t="+Date.now(),{cache:"no-store"})
   .then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{const rows=parseCSV(t);if(rows.length){buildPlan(rows);if(document.getElementById("home").classList.contains("on"))renderHome()}})
   .catch(()=>{})}
+
+// Firebase 설정 (캡처 화면의 고유 키값 적용 완료)
+const firebaseConfig = {
+  apiKey: "AIzaSyD43VjxxR4yo8e8wBiFguZHzTSt4Fde6LQ",
+  authDomain: "kodiam-bible.firebaseapp.com",
+  projectId: "kodiam-bible",
+  storageBucket: "kodiam-bible.firebasestorage.app",
+  messagingSenderId: "230347060877",
+  appId: "1:230347060877:web:0838c6a3989645a7c614c4"
+};
+
+// Firebase 초기화
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+let currentUser = null;
+
+// 로그인 상태 감지
+auth.onAuthStateChanged(async (user) => {
+  const loginBtn = document.getElementById("loginBtn");
+  const userProfile = document.getElementById("userProfile");
+  const userNameTxt = document.getElementById("userNameTxt");
+
+  if (user) {
+    currentUser = user;
+    if (loginBtn) loginBtn.style.display = "none";
+    if (userProfile) userProfile.style.display = "flex";
+    if (userNameTxt) userNameTxt.textContent = user.displayName || "성도님";
+    
+    // 클라우드 데이터 동기화
+    await syncFromCloud(user.uid);
+  } else {
+    currentUser = null;
+    if (loginBtn) loginBtn.style.display = "block";
+    if (userProfile) userProfile.style.display = "none";
+  }
+  renderHome();
+});
+
+// 로그인 / 로그아웃 동작
+const loginBtnEl = document.getElementById("loginBtn");
+if (loginBtnEl) {
+  loginBtnEl.onclick = () => {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider).catch((error) => {
+      alert("로그인 중 문제가 발생했습니다: " + error.message);
+    });
+  };
+}
+
+const logoutBtnEl = document.getElementById("logoutBtn");
+if (logoutBtnEl) {
+  logoutBtnEl.onclick = () => {
+    if (confirm("로그아웃하시겠습니까? 기기에 저장된 기록은 유지됩니다.")) {
+      auth.signOut();
+    }
+  };
+}
+
+// 클라우드 -> 로컬로 데이터 동기화
+async function syncFromCloud(uid) {
+  try {
+    const userDocRef = db.collection("users").doc(uid);
+    const doc = await userDocRef.get();
+    
+    if (doc.exists) {
+      const data = doc.data();
+      if (data.readList && Array.isArray(data.readList)) {
+        data.readList.forEach(k => read.add(k));
+        save("kodiam-read", [...read]);
+      }
+      if (data.answers) {
+        Object.entries(data.answers).forEach(([k, text]) => {
+          localStorage.setItem(`kodiam-ans-${k}`, text);
+        });
+      }
+    } else {
+      await pushToCloud();
+    }
+  } catch (e) {
+    console.error("클라우드 동기화 실패:", e);
+  }
+}
+
+// 로컬 -> 클라우드로 저장
+async function pushToCloud() {
+  if (!currentUser) return;
+  try {
+    const answers = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const keyName = localStorage.key(i);
+      if (keyName && keyName.startsWith("kodiam-ans-")) {
+        const dateKey = keyName.replace("kodiam-ans-", "");
+        answers[dateKey] = localStorage.getItem(keyName);
+      }
+    }
+
+    await db.collection("users").doc(currentUser.uid).set({
+      name: currentUser.displayName,
+      readList: [...read],
+      answers: answers,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+  } catch (e) {
+    console.error("클라우드 저장 실패:", e);
+  }
+}
+  
 </script>
 </body>
 </html>

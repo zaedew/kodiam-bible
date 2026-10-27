@@ -103,8 +103,6 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(-
 .dhead small{color:var(--soft);font-size:14px}
 .dhead h1{font-family:"Gowun Batang",serif;font-size:28px;line-height:1.3;margin:2px 0 18px}
 
-.teaser{position:relative;width:100%;aspect-ratio:1/1;border:0;padding:0;border-radius:20px;overflow:hidden;
-  background:linear-gradient(160deg,#1F5FA8,#163F73);color:#fff;text-align:left;display:block}
 .guide{display:none;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:22px;margin-top:0}
 .guide.on{display:block}
 .guide:focus{outline:none}
@@ -415,6 +413,25 @@ function saveAnswer(k,text){
   pushToCloud();
 }
 
+/* ---------- Firebase 초기화 및 변수 선언 (상단 배치) ---------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyD43VjxxR4yo8e8wBiFguZHzTSt4Fde6LQ",
+  authDomain: "kodiam-bible.firebaseapp.com",
+  projectId: "kodiam-bible",
+  storageBucket: "kodiam-bible.firebasestorage.app",
+  messagingSenderId: "230347060877",
+  appId: "1:230347060877:web:0838c6a3989645a7c614c4"
+};
+
+try {
+  firebase.initializeApp(firebaseConfig);
+} catch(e) {
+  console.log("Firebase already initialized or error", e);
+}
+const auth = firebase.auth();
+const db = firebase.firestore();
+let currentUser = null;
+
 /* ---------- 홈 ---------- */
 function greet(){
   const h=new Date().getHours();
@@ -670,9 +687,31 @@ function renderList(){
 }
 document.getElementById("listAll").onclick=()=>{listAll=!listAll;renderList()};
 
-/* ---------- 공통 인터랙션 ---------- */
+/* ---------- 공통 인터랙션 (로그인/로그아웃 클릭 확실하게 가로채기) ---------- */
 function show(id){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.id===id));window.scrollTo(0,0);if(id==="home")renderHome();if(id==="record")renderCal()}
+
 document.addEventListener("click",e=>{
+  // 1. 로그인 버튼 클릭 감지
+  if(e.target && e.target.id === "loginBtn"){
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider)
+      .then((res)=>{
+        alert(`${res.user.displayName || "성도"}님, 환영합니다! 동기화가 시작됩니다.`);
+      })
+      .catch((error)=>{
+        alert("로그인 안내: " + error.message);
+      });
+    return;
+  }
+
+  // 2. 로그아웃 버튼 클릭 감지
+  if(e.target && e.target.id === "logoutBtn"){
+    if(confirm("로그아웃하시겠습니까? 기기에 저장된 기록은 유지됩니다.")){
+      auth.signOut();
+    }
+    return;
+  }
+
   const o=e.target.closest("[data-open]"),g=e.target.closest("[data-go]"),t=e.target.closest("[data-toggle]");
   if(t){
     const k=t.dataset.toggle;
@@ -685,6 +724,7 @@ document.addEventListener("click",e=>{
   if(o){openDay(o.dataset.open);return}
   if(g){show(g.dataset.go)}
 });
+
 document.getElementById("prevM").onclick=()=>{if(viewM>0){viewM--;renderCal()}};
 document.getElementById("nextM").onclick=()=>{if(viewM<11){viewM++;renderCal()}};
 document.getElementById("askForm").onsubmit=e=>{e.preventDefault();name=document.getElementById("nameIn").value.trim();save("kodiam-name",name);document.getElementById("ask").classList.remove("on");greet()};
@@ -714,21 +754,7 @@ if(SHEET_URL){fetch(SHEET_URL+(SHEET_URL.includes("?")?"&":"?")+"t="+Date.now(),
   .then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{const rows=parseCSV(t);if(rows.length){buildPlan(rows);if(document.getElementById("home").classList.contains("on"))renderHome()}})
   .catch(()=>{})}
 
-/* ---------- Firebase 초기화 및 실시간 동기화 로직 ---------- */
-const firebaseConfig = {
-  apiKey: "AIzaSyD43VjxxR4yo8e8wBiFguZHzTSt4Fde6LQ",
-  authDomain: "kodiam-bible.firebaseapp.com",
-  projectId: "kodiam-bible",
-  storageBucket: "kodiam-bible.firebasestorage.app",
-  messagingSenderId: "230347060877",
-  appId: "1:230347060877:web:0838c6a3989645a7c614c4"
-};
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-let currentUser = null;
-
-// 로그인 상태 감지
+/* ---------- 로그인 상태 감지 및 동기화 ---------- */
 auth.onAuthStateChanged(async (user) => {
   const loginBtn = document.getElementById("loginBtn");
   const userProfile = document.getElementById("userProfile");
@@ -745,27 +771,8 @@ auth.onAuthStateChanged(async (user) => {
     if (loginBtn) loginBtn.style.display = "block";
     if (userProfile) userProfile.style.display = "none";
   }
-  renderHome();
+  greet();
 });
-
-// 로그인 / 로그아웃 클릭 이벤트
-const loginBtnEl = document.getElementById("loginBtn");
-if (loginBtnEl) {
-  loginBtnEl.onclick = () => {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider).catch((error) => {
-      alert("로그인 중 문제가 발생했습니다: " + error.message);
-    });
-  };
-}
-const logoutBtnEl = document.getElementById("logoutBtn");
-if (logoutBtnEl) {
-  logoutBtnEl.onclick = () => {
-    if (confirm("로그아웃하시겠습니까? 기기에 저장된 기록은 유지됩니다.")) {
-      auth.signOut();
-    }
-  };
-}
 
 // 클라우드 -> 로컬 동기화
 async function syncFromCloud(uid) {

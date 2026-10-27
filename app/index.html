@@ -176,6 +176,28 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(-
 .dayc.read.today b{color:var(--deep)}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
 
+.top{justify-content:space-between}
+.weekhead{display:flex;align-items:center;justify-content:space-between;margin:0 0 10px}
+.weekhead h2{margin:0}
+.wknav{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--soft)}
+.wknav span{min-width:74px;text-align:center}
+.wknav button{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--blue);font-size:18px;line-height:1;padding:0}
+
+.listhead{display:flex;align-items:center;justify-content:space-between;margin:26px 0 8px}
+.listhead h2{margin:0;font-size:18px}
+.listhead button{background:none;border:0;color:var(--blue);font-weight:500;font-size:14px;text-decoration:underline;text-underline-offset:3px;padding:6px 0}
+.plist{display:flex;flex-direction:column;gap:6px}
+.pmonth{font-family:"Gowun Batang",serif;font-size:17px;margin:16px 0 4px}
+.prow{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 14px}
+.prow.today{border-color:var(--blue)}
+.prow .pd{flex:none;width:34px;text-align:center;font-size:12px;color:var(--soft);line-height:1.2}
+.prow .pd b{display:block;font-size:17px;color:var(--ink)}
+.prow .pp{flex:1;font-size:15px;font-weight:500}
+.prow .pp small{display:block;font-size:13px;font-weight:400;color:var(--soft)}
+.prow .ps{flex:none;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff}
+.prow.read .ps{background:var(--blue);border-color:var(--blue)}
+.pempty{color:var(--soft);font-size:14px;margin:4px 0}
+
 /* 기록 화면 */
 .calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .calhead h2{margin:0;font-size:20px}
@@ -237,14 +259,14 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       <div class="stats">
         <p class="big" id="pct">0%</p>
         <p class="sub" id="chap">올해 1,189장 중 0장을 읽었어요</p>
-        <button class="link" data-go="record">내 통독 기록 보기</button>
+        <button class="link" data-go="record">통독표와 내 기록 보기</button>
       </div>
     </div>
 
     <div class="today" id="todayBox"></div>
 
     <div class="week">
-      <h2>이번 주</h2>
+      <div class="weekhead"><h2>주간 통독</h2><div class="wknav"><button id="hPrev" aria-label="지난주">‹</button><span id="hLabel"></span><button id="hNext" aria-label="다음 주">›</button></div></div>
       <div class="strip" id="strip"></div>
     </div>
 
@@ -259,14 +281,14 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   <!-- 하루 화면 -->
   <section class="view" id="day" aria-label="오늘 분량">
     <div class="daybar">
-      <div class="top"><button class="back" data-go="home">‹ 처음으로</button></div>
+      <div class="top"><button class="back" data-go="home">‹ 처음으로</button><div class="wknav"><button id="dPrev" aria-label="지난주">‹</button><span id="dLabel"></span><button id="dNext" aria-label="다음 주">›</button></div></div>
       <div class="strip" id="dayStrip" aria-label="이번 주 날짜"></div>
     </div>
     <div id="dayBody"></div>
   </section>
 
   <!-- 기록 -->
-  <section class="view" id="record" aria-label="내 통독 기록">
+  <section class="view" id="record" aria-label="통독표와 내 기록">
     <div class="top"><button class="back" data-go="home">‹ 처음으로</button></div>
     <div class="calhead">
       <button id="prevM" aria-label="이전 달">‹</button>
@@ -281,6 +303,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       <span><i style="background:var(--rest)"></i>쉬는 날</span>
     </div>
     <div class="recsum" id="recsum"></div>
+    <div class="listhead"><h2 id="listTitle">이 달의 통독표</h2><button id="listAll">올해 전체 보기</button></div>
+    <div class="plist" id="plist"></div>
   </section>
 </div>
 
@@ -398,13 +422,23 @@ function stripHTML(base,sel){
     h+=`<button class="${cls}" data-open="${k}" ${k===sel?'aria-current="date"':""} aria-label="${fmt(d)}${k===tk?", 오늘":""}${read.has(k)?", 읽음":""}">${WD[d.getDay()]}<b>${d.getDate()}</b><span class="dot"></span></button>`}
   return h;
 }
-function renderStrip(){document.getElementById("strip").innerHTML=stripHTML(today,key(today))}
+const weekStart=b=>{const s=new Date(b);s.setHours(0,0,0,0);s.setDate(s.getDate()-s.getDay());return s};
+function wkLabel(b){const s=weekStart(b),e=new Date(s);e.setDate(s.getDate()+6);
+  return key(s)===key(weekStart(today))?"이번 주":`${s.getMonth()+1}.${s.getDate()} – ${e.getMonth()+1}.${e.getDate()}`}
+let homeBase=new Date(today),dayBase=new Date(today),curDay=key(today);
+function renderStrip(){document.getElementById("strip").innerHTML=stripHTML(homeBase,key(today));document.getElementById("hLabel").textContent=wkLabel(homeBase)}
+function renderDayStrip(){document.getElementById("dayStrip").innerHTML=stripHTML(dayBase,curDay);document.getElementById("dLabel").textContent=wkLabel(dayBase)}
+const shift=(b,n)=>{const x=new Date(b);x.setDate(x.getDate()+n);return x};
+document.getElementById("hPrev").onclick=()=>{homeBase=shift(homeBase,-7);renderStrip()};
+document.getElementById("hNext").onclick=()=>{homeBase=shift(homeBase,7);renderStrip()};
+document.getElementById("dPrev").onclick=()=>{dayBase=shift(dayBase,-7);renderDayStrip()};
+document.getElementById("dNext").onclick=()=>{dayBase=shift(dayBase,7);renderDayStrip()};
 function renderHome(){greet();progress();renderToday();renderStrip()}
 
 /* ---------- 하루 화면 ---------- */
 function openDay(k){
   const d=fromKey(k),p=PLAN[k],body=document.getElementById("dayBody");
-  document.getElementById("dayStrip").innerHTML=stripHTML(d,k);
+  dayBase=new Date(d);curDay=k;renderDayStrip();
   if(!p&&d.getDay()!==0){
     body.innerHTML=`<div class="dhead"><small>${fmt(d)}</small><h1>통독 자료 준비 중</h1></div>
       <div class="sunday"><p>이 날의 통독 가이드가 아직 등록되지 않았어요.</p></div>`;
@@ -437,6 +471,10 @@ function openDay(k){
       <button class="check ${done?"done":""}" data-toggle="${k}">${done?"읽었어요 ✓ (다시 누르면 취소)":"성경 본문을 다 읽었어요"}</button>
       <p class="note">가이드와 방송은 읽기를 돕는 길잡이예요. 진도에는 본문 읽기만 기록돼요.</p>`;
     const cards=document.getElementById("cards"),g=document.getElementById("guide"),bar=document.getElementById("cardbar"),dots=document.getElementById("dots");
+    const hasT=!!p.q1,hasG=!!(p.title||p.word_1);
+    if(!hasG)g.innerHTML=`<small class="file">${p.label}</small><h3>통독 가이드 준비 중</h3><p>이 날의 가이드는 곧 올라와요. 성경 본문은 먼저 읽으셔도 좋아요.</p>${hasT?`<button class="close" id="closeGuide">티저 카드 다시 보기</button>`:""}`;
+    if(!hasT){["cardwrap","dots","cardbar"].forEach(id=>document.getElementById(id).remove());g.classList.add("on");const c=document.getElementById("closeGuide");if(c)c.remove()}
+    if(hasT){
     drawCards(p,cards);
     const wrap=document.getElementById("cardwrap"),pv=document.getElementById("prevCard"),nx=document.getElementById("nextCard");
     let cur=0;const N=4;
@@ -451,6 +489,7 @@ function openDay(k){
       window.scrollTo({top:0})};
     mark(0);
     document.getElementById("saveCards").onclick=()=>openSheet(k,cards);
+    }
   }
   show("day");
 }
@@ -524,9 +563,28 @@ function renderCal(){
     h+=`<button class="${c}" data-open="${k}" aria-label="${fmt(d)}${read.has(k)?", 읽음":""}">${n}</button>`}
   document.getElementById("cal").innerHTML=h;
   document.getElementById("prevM").disabled=viewM===0;document.getElementById("nextM").disabled=viewM===11;
-  const k=key(today),past=READING.filter(r=>r<=k).length,f=fromKey(READING[0]),l=fromKey(READING[READING.length-1]);let days2=0;read.forEach(r=>{if(PLAN[r])days2++});
-  document.getElementById("recsum").innerHTML=`<p>지금까지 통독한 날 ${days2}일</p><p>날짜를 누르면 그날 본문을 열고, 원하실 때 놓친 날을 채울 수 있어요. 지금 등록된 통독 자료는 ${f.getMonth()+1}월 ${f.getDate()}일부터 ${l.getMonth()+1}월 ${l.getDate()}일까지예요.</p>`;
+  let days2=0;read.forEach(r=>{if(PLAN[r])days2++});
+  document.getElementById("recsum").innerHTML=`<p>지금까지 통독한 날 ${days2}일</p><p>날짜나 본문을 누르면 그날 화면이 열려요. 놓친 날은 원하실 때 채우시면 돼요.</p>`;
+  renderList();
 }
+let listAll=false;
+function renderList(){
+  const months=listAll?[...new Set(READING.map(k=>fromKey(k).getMonth()))]:[viewM];
+  document.getElementById("listTitle").textContent=listAll?`${YEAR}년 통독표`:`${viewM+1}월 통독표`;
+  document.getElementById("listAll").textContent=listAll?"이 달만 보기":"올해 전체 보기";
+  const tk=key(today);let h="";
+  months.forEach(m=>{const ks=READING.filter(k=>fromKey(k).getMonth()===m);
+    if(listAll)h+=`<h3 class="pmonth">${m+1}월</h3>`;
+    if(!ks.length){h+=`<p class="pempty">이 달의 통독표는 아직 시트에 없어요.</p>`;return}
+    ks.forEach(k=>{const d=fromKey(k),p=PLAN[k],r=read.has(k);
+      h+=`<button class="prow ${r?"read":""} ${k===tk?"today":""}" data-open="${k}" aria-label="${fmt(d)} ${p.label}${r?", 읽음":""}">
+        <span class="pd"><b>${d.getDate()}</b>${WD[d.getDay()]}</span>
+        <span class="pp">${p.label}${p.title?`<small>${esc(p.title)}</small>`:""}</span>
+        <span class="ps" aria-hidden="true">${r?"✓":""}</span></button>`})});
+  if(listAll&&!READING.length)h=`<p class="pempty">아직 시트에 통독표가 없어요.</p>`;
+  document.getElementById("plist").innerHTML=h;
+}
+document.getElementById("listAll").onclick=()=>{listAll=!listAll;renderList()};
 
 /* ---------- 공통 ---------- */
 function show(id){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.id===id));window.scrollTo(0,0);if(id==="home")renderHome();if(id==="record")renderCal()}

@@ -21,8 +21,9 @@
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
 <!-- Kakao SDK -->
-<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"></script>
-
+<!-- 변경 전: <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"></script> -->
+<!-- 변경 후 -->
+<script src="https://developers.kakao.com/sdk/js/kakao.min.js"></script>
 <style>
 :root{
   --paper:#F6F9FC; --surface:#FFFFFF; --ink:#132C48; --soft:#5A7390;
@@ -721,15 +722,17 @@ document.getElementById("listAll").onclick=()=>{listAll=!listAll;renderList()};
 /* ---------- 통합 로그인 / 로그아웃 동작 함수 ---------- */
 function loginWithKakao() {
   if (!window.Kakao) {
-    alert("카카오 SDK가 준비되지 않았습니다.");
+    alert("카카오 SDK를 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.");
     return;
   }
   if (!Kakao.isInitialized()) {
-    alert("카카오 JavaScript 키가 설정되지 않았습니다. index.html의 KAKAO_JS_KEY를 확인해 주세요.");
+    alert("카카오 JavaScript 키가 비어있거나 초기화되지 않았습니다. KAKAO_JS_KEY를 확인해 주세요.");
     return;
   }
+
   Kakao.Auth.login({
-    success: function() {
+    scope: 'profile_nickname',
+    success: function(authObj) {
       Kakao.API.request({
         url: '/v2/user/me',
         success: async function(res) {
@@ -747,12 +750,12 @@ function loginWithKakao() {
           alert(`${kakaoNick}님, 환영합니다! 카카오 계정으로 동기화됩니다.`);
         },
         fail: function(error) {
-          alert("카카오 계정 정보를 가져오지 못했습니다: " + JSON.stringify(error));
+          alert("카카오 회원 정보를 가져오지 못했습니다: " + JSON.stringify(error));
         }
       });
     },
     fail: function(err) {
-      alert("카카오 로그인 실패: " + JSON.stringify(err));
+      alert("카카오 로그인 창이 닫혔거나 취소되었습니다: " + JSON.stringify(err));
     }
   });
 }

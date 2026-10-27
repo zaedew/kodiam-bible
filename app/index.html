@@ -435,13 +435,25 @@ buildPlan(RAW);
 /* ---------- 저장 및 묵상 관리 ---------- */
 function load(k,f){try{const v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f}}
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
-let read=new Set(load("kodiam-read",[]));
+/* 기록마다 "바꾼 시각"을 붙여, 기기끼리 합칠 때 더 최근에 바꾼 쪽이 이기게 함
+   (읽음 취소나 묵상 삭제도 '바꾼 기록'으로 남아 다른 기기에서 되살아나지 않음) */
+let META=load("kodiam-meta",null);
+if(!META||!META.read||!META.ans){
+  META={read:{},ans:{}};
+  load("kodiam-read",[]).forEach(k=>{META.read[k]={v:true,t:1}});
+  for(let i=0;i<localStorage.length;i++){const n=localStorage.key(i);if(n&&n.startsWith("kodiam-ans-"))META.ans[n.slice(11)]={t:1}}
+  save("kodiam-meta",META);
+}
+let read=new Set(Object.keys(META.read).filter(k=>META.read[k].v));
 let name=load("kodiam-name","");
+function saveMeta(){save("kodiam-meta",META);save("kodiam-read",[...read])}
+function setRead(k,v){META.read[k]={v:!!v,t:Date.now()};v?read.add(k):read.delete(k);saveMeta();pushToCloud()}
 
 function loadAnswer(k){return localStorage.getItem(`kodiam-ans-${k}`)||"";}
 function saveAnswer(k,text){
   if(text.trim())localStorage.setItem(`kodiam-ans-${k}`,text);
   else localStorage.removeItem(`kodiam-ans-${k}`);
+  META.ans[k]={t:Date.now()};saveMeta();
   pushToCloud();
 }
 
@@ -809,26 +821,38 @@ if(auth){
 async function syncFromCloud(uid) {
   if (!db) return;
   try {
-    const userDocRef = db.collection("users").doc(uid);
-    const doc = await userDocRef.get();
-    if (doc.exists) {
-      const data = doc.data();
-      if (data.readList && Array.isArray(data.readList)) {
-        data.readList.forEach(k => read.add(k));
-        save("kodiam-read", [...read]);
-      }
-      if (data.answers) {
-        Object.entries(data.answers).forEach(([k, text]) => {
-          localStorage.setItem(`kodiam-ans-${k}`, text);
-        });
-      }
-    } else {
-      await pushNow();
-    }
-    if(document.getElementById("home").classList.contains("on"))renderHome();
+    const doc = await db.collection("users").doc(uid).get();
+    const data = doc.exists ? doc.data() : {};
+    /* 예전 형식(readList, answers)도 읽어 들임 */
+    const cR = data.readMap || (Array.isArray(data.readList) ? Object.fromEntries(data.readList.map(k=>[k,{v:true,t:1}])) : {});
+    const cA = data.ansMap || (data.answers ? Object.fromEntries(Object.entries(data.answers).map(([k,x])=>[k,{text:x,t:1}])) : {});
+    let localNewer = !data.readMap || !data.ansMap;
+    new Set([...Object.keys(cR),...Object.keys(META.read)]).forEach(k=>{
+      const c=cR[k],l=META.read[k];
+      if(c&&(!l||c.t>l.t))META.read[k]={v:!!c.v,t:c.t||0};
+      else if(l&&(!c||l.t>c.t))localNewer=true;
+    });
+    new Set([...Object.keys(cA),...Object.keys(META.ans)]).forEach(k=>{
+      const c=cA[k],l=META.ans[k];
+      if(c&&(!l||c.t>l.t)){
+        if(c.text&&c.text.trim())localStorage.setItem(`kodiam-ans-${k}`,c.text);else localStorage.removeItem(`kodiam-ans-${k}`);
+        META.ans[k]={t:c.t||0};
+      }else if(l&&(!c||l.t>c.t))localNewer=true;
+    });
+    read=new Set(Object.keys(META.read).filter(k=>META.read[k].v));
+    saveMeta();
+    if(localNewer)await pushNow();
+    refreshViews();
   } catch (e) {
     console.error("클라우드 동기화 실패:", e);
   }
+}
+/* 동기화 뒤 화면 다시 그리기 (묵상을 쓰는 중에는 건드리지 않음) */
+function refreshViews(){
+  const on=id=>document.getElementById(id).classList.contains("on");
+  if(on("home"))renderHome();
+  else if(on("record"))renderCal();
+  else if(on("day")){const ta=document.getElementById("myAnswer");if(!(ta&&document.activeElement===ta))openDay(curDay)}
 }
 
 // 로컬 -> 클라우드 백업: 입력이 멈추고 2초 뒤 한 번만
@@ -839,25 +863,27 @@ async function pushNow() {
   pushTimer=null;
   if (!appUser || !db || !auth || !auth.currentUser) return;
   try {
-    const answers = {};
-    for (let i = 0; i < localStorage.length; i++) {
-      const keyName = localStorage.key(i);
-      if (keyName && keyName.startsWith("kodiam-ans-")) {
-        const dateKey = keyName.replace("kodiam-ans-", "");
-        answers[dateKey] = localStorage.getItem(keyName);
-      }
-    }
-    await db.collection("users").doc(appUser.uid).set({
+    const ansMap = {};
+    Object.entries(META.ans).forEach(([k,m])=>{ansMap[k]={text:loadAnswer(k),t:m.t||0}});
+    const FV = firebase.firestore.FieldValue;
+    await db.collection("users").doc(auth.currentUser.uid).set({
       name: appUser.name,
       provider: appUser.provider,
-      readList: [...read],
-      answers: answers,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      readMap: META.read,
+      ansMap: ansMap,
+      readList: FV.delete(),
+      answers: FV.delete(),
+      updatedAt: FV.serverTimestamp()
     }, { merge: true });
   } catch (e) {
     console.error("클라우드 저장 실패:", e);
   }
 }
+/* 앱으로 돌아올 때 다른 기기의 변경을 가져오고, 떠날 때는 남은 저장을 마저 함 */
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState==="hidden"){if(pushTimer){clearTimeout(pushTimer);pushNow()}}
+  else if(auth&&auth.currentUser)syncFromCloud(auth.currentUser.uid);
+});
 
 /* ---------- 공통 인터랙션 ---------- */
 function show(id){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.id===id));window.scrollTo(0,0);if(id==="home")renderHome();if(id==="record")renderCal()}
@@ -882,9 +908,7 @@ document.addEventListener("click", e => {
   const o=e.target.closest("[data-open]"),g=e.target.closest("[data-go]"),t=e.target.closest("[data-toggle]");
   if(t){
     const k=t.dataset.toggle;
-    read.has(k)?read.delete(k):read.add(k);
-    save("kodiam-read",[...read]);
-    pushToCloud();
+    setRead(k,!read.has(k));
     if(document.getElementById("day").classList.contains("on"))openDay(k);else renderHome();
     return;
   }

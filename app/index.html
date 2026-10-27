@@ -20,10 +20,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
-<!-- Kakao SDK -->
-<!-- 변경 전: <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"></script> -->
-<!-- 변경 후 -->
-<script src="https://developers.kakao.com/sdk/js/kakao.min.js"></script>
+</script>
 <style>
 :root{
   --paper:#F6F9FC; --surface:#FFFFFF; --ink:#132C48; --soft:#5A7390;
@@ -66,7 +63,11 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(-
 .auth-wrap{flex:none;margin-top:4px}
 .auth-group{display:flex;gap:6px}
 .auth-btn{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:6px 10px;font-size:12px;font-weight:500;color:var(--blue)}
-.auth-btn.kakao{background:#FEE500;border-color:#FEE500;color:#191919}
+.sheet .btn.lgk{background:#FEE500;color:#191919;margin-top:0}
+.sheet .btn.lgg{background:var(--surface);color:var(--ink);border:1px solid var(--line);margin-top:10px}
+.sheet .btn.lgc{background:none;color:var(--soft);margin-top:6px}
+.lgmsg{margin:12px 0 0!important;font-size:13px!important;color:var(--deep)!important}
+.lgmsg:empty{display:none}
 .auth-profile{display:none;align-items:center;gap:8px;font-size:13px}
 .auth-profile b{color:var(--ink);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .auth-profile button{background:none;border:0;color:var(--soft);font-size:12px;text-decoration:underline;padding:0}
@@ -269,8 +270,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       </div>
       <div class="auth-wrap">
         <div id="loginGroup" class="auth-group">
-          <button id="loginBtn" class="auth-btn">구글 로그인</button>
-          <button id="kakaoLoginBtn" class="auth-btn kakao">카카오 로그인</button>
+          <button id="openLogin" class="auth-btn">기록 백업</button>
         </div>
         <div id="userProfile" class="auth-profile">
           <b id="userNameTxt"></b>
@@ -360,6 +360,17 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   </div>
 </div>
 
+<div class="sheet" id="loginSheet" role="dialog" aria-label="기록 백업 로그인">
+  <div class="in">
+    <h2>기록 백업하기</h2>
+    <p>로그인하지 않아도 앱은 그대로 쓸 수 있어요. 로그인하면 통독 기록과 묵상이 안전하게 보관되어, 휴대폰을 바꾸거나 다른 기기에서 열어도 이어집니다. 내 기록은 나만 볼 수 있어요.</p>
+    <button class="btn lgk" data-login="kakao">카카오로 로그인</button>
+    <button class="btn lgg" data-login="google">구글로 로그인</button>
+    <p class="lgmsg" id="loginMsg" aria-live="polite"></p>
+    <button class="btn lgc" id="loginClose">닫기</button>
+  </div>
+</div>
+
 <div class="ask" id="ask">
   <form id="askForm">
     <h2>반가워요</h2>
@@ -422,7 +433,7 @@ function saveAnswer(k,text){
   pushToCloud();
 }
 
-/* ---------- Firebase & Kakao 초기화 ---------- */
+/* ---------- Firebase 초기화: 실패해도 앱은 그대로 ---------- */
 const firebaseConfig = {
   apiKey: "AIzaSyD43VjxxR4yo8e8wBiFguZHzTSt4Fde6LQ",
   authDomain: "kodiam-bible.firebaseapp.com",
@@ -431,29 +442,28 @@ const firebaseConfig = {
   messagingSenderId: "230347060877",
   appId: "1:230347060877:web:0838c6a3989645a7c614c4"
 };
+const KAKAO_PROVIDER = "oidc.kakao"; /* Firebase에 등록한 OpenID Connect 공급자 ID */
+let auth=null,db=null;
+try{
+  if(window.firebase){
+    if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+    auth=firebase.auth();db=firebase.firestore();
+  }
+}catch(e){auth=null;db=null}
 
-try {
-  firebase.initializeApp(firebaseConfig);
-} catch(e) {}
-const auth = firebase.auth();
-const db = firebase.firestore();
-
-// ★ 여기에 복사하신 카카오 JavaScript 키를 따옴표 안에 넣어주세요 ★
-const KAKAO_JS_KEY = "726eaaf830173a8441fa3d1b38fbd124";
-
-if (window.Kakao && !Kakao.isInitialized() && KAKAO_JS_KEY !== "여기에_카카오_자바스크립트_키_입력") {
-  Kakao.init(KAKAO_JS_KEY);
-}
-
-// 통합 유저 상태 관리
 let appUser = load("kodiam-auth-user", null);
+/* 예전 방식(kakao_번호)으로 저장된 로그인 정보는 정리 */
+if(appUser&&String(appUser.uid||"").startsWith("kakao_")){appUser=null;save("kodiam-auth-user",null)}
 
 function updateAuthUI() {
   const loginGroup = document.getElementById("loginGroup");
   const userProfile = document.getElementById("userProfile");
   const userNameTxt = document.getElementById("userNameTxt");
 
-  if (appUser) {
+  if (!auth) {
+    if (loginGroup) loginGroup.style.display = "none";
+    if (userProfile) userProfile.style.display = "none";
+  } else if (appUser) {
     if (loginGroup) loginGroup.style.display = "none";
     if (userProfile) userProfile.style.display = "flex";
     if (userNameTxt) userNameTxt.textContent = `${appUser.name}`;
@@ -719,83 +729,62 @@ function renderList(){
 }
 document.getElementById("listAll").onclick=()=>{listAll=!listAll;renderList()};
 
-/* ---------- 통합 로그인 / 로그아웃 동작 함수 ---------- */
-function loginWithKakao() {
-  if (!window.Kakao) {
-    alert("카카오 SDK를 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.");
-    return;
-  }
-  if (!Kakao.isInitialized()) {
-    alert("카카오 JavaScript 키가 비어있거나 초기화되지 않았습니다. KAKAO_JS_KEY를 확인해 주세요.");
-    return;
-  }
+/* ---------- 로그인 / 로그아웃 ---------- */
+const UA=navigator.userAgent;
+const IN_APP=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\/|DaumApps|everytimeApp/i.test(UA);
+const STANDALONE=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
+const IOS=/iphone|ipad|ipod/i.test(UA);
+const loginMsg=t=>{const m=document.getElementById("loginMsg");if(m)m.textContent=t||""};
 
-  Kakao.Auth.login({
-    scope: 'profile_nickname',
-    success: function(authObj) {
-      Kakao.API.request({
-        url: '/v2/user/me',
-        success: async function(res) {
-          const kakaoId = `kakao_${res.id}`;
-          const kakaoNick = (res.kakao_account && res.kakao_account.profile) ? res.kakao_account.profile.nickname : "성도님";
-          
-          appUser = {
-            uid: kakaoId,
-            name: kakaoNick,
-            provider: "kakao"
-          };
-          save("kodiam-auth-user", appUser);
-          updateAuthUI();
-          await syncFromCloud(appUser.uid);
-          alert(`${kakaoNick}님, 환영합니다! 카카오 계정으로 동기화됩니다.`);
-        },
-        fail: function(error) {
-          alert("카카오 회원 정보를 가져오지 못했습니다: " + JSON.stringify(error));
-        }
-      });
-    },
-    fail: function(err) {
-      alert("카카오 로그인 창이 닫혔거나 취소되었습니다: " + JSON.stringify(err));
+async function finishLogin(res){
+  if(!res||!res.user)return;
+  const u=res.user,info=res.additionalUserInfo||{},prof=info.profile||{};
+  /* 카카오는 닉네임을 nickname으로 보내 줌 */
+  const nick=prof.nickname||prof.name||u.displayName;
+  if(nick&&nick!==u.displayName){try{await u.updateProfile({displayName:nick})}catch(e){}}
+  setUser(u,nick);
+  document.getElementById("loginSheet").classList.remove("on");
+}
+async function login(kind){
+  if(!auth){loginMsg("지금은 로그인 기능을 불러오지 못했어요. 잠시 뒤 다시 시도해 주세요.");return}
+  if(kind==="google"&&IN_APP){loginMsg("구글은 카카오톡 같은 앱 안의 브라우저에서 로그인을 막고 있어요. 카카오로 로그인하시거나, 메뉴에서 ‘다른 브라우저로 열기’를 누른 뒤 다시 시도해 주세요.");return}
+  const provider=kind==="kakao"?new firebase.auth.OAuthProvider(KAKAO_PROVIDER):new firebase.auth.GoogleAuthProvider();
+  if(kind==="kakao")provider.addScope("openid");
+  loginMsg("로그인 창을 여는 중이에요…");
+  try{
+    if(IN_APP||STANDALONE||IOS){await auth.signInWithRedirect(provider);return}
+    await finishLogin(await auth.signInWithPopup(provider));
+  }catch(err){
+    if(err&&(err.code==="auth/popup-blocked"||err.code==="auth/operation-not-supported-in-this-environment")){
+      try{await auth.signInWithRedirect(provider);return}catch(e2){err=e2}
     }
+    if(err&&err.code==="auth/popup-closed-by-user"){loginMsg("");return}
+    if(err&&err.code==="auth/account-exists-with-different-credential"){loginMsg("같은 이메일로 다른 방식의 로그인이 이미 있어요. 처음 쓰셨던 방법으로 로그인해 주세요.");return}
+    loginMsg("로그인하지 못했어요. 잠시 뒤 다시 시도해 주세요.");console.error(err);
+  }
+}
+function setUser(u,nick){
+  const pid=(u.providerData[0]&&u.providerData[0].providerId)||"";
+  appUser={uid:u.uid,name:nick||u.displayName||"성도",provider:pid.startsWith("oidc.")?"kakao":"google"};
+  save("kodiam-auth-user",appUser);updateAuthUI();syncFromCloud(u.uid);
+}
+function handleLogout(){
+  if(!confirm("로그아웃할까요? 이 휴대폰에 있는 기록은 그대로 남아요."))return;
+  if(auth&&auth.currentUser)auth.signOut();
+  appUser=null;save("kodiam-auth-user",null);updateAuthUI();
+}
+if(auth){
+  auth.getRedirectResult().then(finishLogin).catch(err=>{if(err&&err.code)console.error(err)});
+  auth.onAuthStateChanged(user=>{
+    if(user)setUser(user,user.displayName);
+    else if(appUser){appUser=null;save("kodiam-auth-user",null);updateAuthUI()}
+    else updateAuthUI();
   });
 }
 
-function handleLogout() {
-  if (confirm("로그아웃하시겠습니까? 기기에 저장된 기록은 유지됩니다.")) {
-    if (appUser && appUser.provider === "kakao" && window.Kakao && Kakao.Auth.getAccessToken()) {
-      Kakao.Auth.logout(()=>{});
-    }
-    if (auth.currentUser) {
-      auth.signOut();
-    }
-    appUser = null;
-    save("kodiam-auth-user", null);
-    updateAuthUI();
-  }
-}
-
-// 구글 로그인 감지
-auth.onAuthStateChanged(async (user) => {
-  if (user) {
-    appUser = {
-      uid: user.uid,
-      name: user.displayName || "성도님",
-      provider: "google"
-    };
-    save("kodiam-auth-user", appUser);
-    updateAuthUI();
-    await syncFromCloud(user.uid);
-  } else if (appUser && appUser.provider === "google") {
-    appUser = null;
-    save("kodiam-auth-user", null);
-    updateAuthUI();
-  } else {
-    updateAuthUI();
-  }
-});
-
 // 클라우드 -> 로컬 동기화
 async function syncFromCloud(uid) {
+  if (!db) return;
   try {
     const userDocRef = db.collection("users").doc(uid);
     const doc = await userDocRef.get();
@@ -811,16 +800,21 @@ async function syncFromCloud(uid) {
         });
       }
     } else {
-      await pushToCloud();
+      await pushNow();
     }
+    if(document.getElementById("home").classList.contains("on"))renderHome();
   } catch (e) {
     console.error("클라우드 동기화 실패:", e);
   }
 }
 
-// 로컬 -> 클라우드 백업
-async function pushToCloud() {
-  if (!appUser) return;
+// 로컬 -> 클라우드 백업: 입력이 멈추고 2초 뒤 한 번만
+let pushTimer=null;
+function pushToCloud(){if(!appUser||!db)return;clearTimeout(pushTimer);pushTimer=setTimeout(pushNow,2000)}
+addEventListener("pagehide",()=>{if(pushTimer){clearTimeout(pushTimer);pushNow()}});
+async function pushNow() {
+  pushTimer=null;
+  if (!appUser || !db || !auth || !auth.currentUser) return;
   try {
     const answers = {};
     for (let i = 0; i < localStorage.length; i++) {
@@ -846,24 +840,10 @@ async function pushToCloud() {
 function show(id){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.id===id));window.scrollTo(0,0);if(id==="home")renderHome();if(id==="record")renderCal()}
 
 document.addEventListener("click", e => {
-  // 구글 로그인
-  if (e.target && e.target.id === "loginBtn") {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider)
-      .then((res)=>{
-        alert(`${res.user.displayName || "성도"}님, 환영합니다! 동기화가 시작됩니다.`);
-      })
-      .catch((error)=>{
-        alert("구글 로그인 안내: " + error.message);
-      });
-    return;
-  }
-
-  // 카카오 로그인
-  if (e.target && e.target.id === "kakaoLoginBtn") {
-    loginWithKakao();
-    return;
-  }
+  if (e.target.closest("#openLogin")) { loginMsg(""); document.getElementById("loginSheet").classList.add("on"); return; }
+  if (e.target.closest("#loginClose")) { document.getElementById("loginSheet").classList.remove("on"); return; }
+  const lg = e.target.closest("[data-login]");
+  if (lg) { login(lg.dataset.login); return; }
 
   // 로그아웃
   if (e.target && e.target.id === "logoutBtn") {

@@ -16,9 +16,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@700&display=swap" rel="stylesheet">
 
 <!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
 </script>
 <style>
@@ -193,8 +190,8 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(-
 .daybar .back{padding:4px 10px 4px 0}
 .daybar .dayc{padding:5px 0;border-radius:12px}
 .daybar .dayc b{font-size:15px}
-.dayc.today b{color:var(--blue)}
-.dayc.read.today b{color:var(--deep)}
+.dayc.istoday b{color:var(--blue)}
+.dayc.read.istoday b{color:var(--deep)}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
 
 .top{justify-content:space-between}
@@ -210,7 +207,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .plist{display:flex;flex-direction:column;gap:6px}
 .pmonth{font-family:"Gowun Batang",serif;font-size:17px;margin:16px 0 4px}
 .prow{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 14px}
-.prow.today{border-color:var(--blue)}
+.prow.istoday{border-color:var(--blue)}
 .prow .pd{flex:none;width:34px;text-align:center;font-size:12px;color:var(--soft);line-height:1.2}
 .prow .pd b{display:block;font-size:17px;color:var(--ink)}
 .prow .pp{flex:1;font-size:15px;font-weight:500}
@@ -232,6 +229,31 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .trackbox{background:var(--sky);border-radius:14px;padding:12px 14px;margin:-6px 0 14px;font-size:14px;line-height:1.5}
 .trackbox b{display:block;color:var(--deep);font-size:15px}
 .trackbox span{color:var(--ink)}
+
+.foot{display:flex;justify-content:center;flex-wrap:wrap;gap:6px;margin-top:28px;font-size:13px;color:var(--soft)}
+.foot button,.proto .ver{background:none;border:0;padding:4px 2px;color:var(--soft);font:inherit;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.proto{margin-top:8px}
+.doc{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:24px 22px;line-height:1.85}
+.doc h1{font-family:"Gowun Batang",serif;font-size:24px;margin:0 0 12px}
+.doc h2{font-family:"Gowun Batang",serif;font-size:20px;margin:26px 0 8px}
+.doc h3{font-size:15px;margin:18px 0 4px;color:var(--deep)}
+.doc p{margin:0 0 10px}
+.doc .small,.sheet .small{font-size:13px!important;color:var(--soft)!important}
+.sheet .wl{color:var(--ink)!important;font-size:15px!important;line-height:1.8}
+.newsv{margin:6px 0 4px}.newsv b{font-size:14px;color:var(--deep)}
+.newsv ul{margin:6px 0 0;padding-left:20px;line-height:1.7}
+.cnt{margin:12px 0 0;font-size:14px;opacity:.95}
+.cnt b{font-weight:700}
+.daycnt{text-align:center;color:var(--deep);margin-top:20px}
+.anbtns{display:flex;gap:14px}
+.medprev{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;border-radius:14px;margin:4px 0 12px}
+.medprev canvas{flex:0 0 100%;width:100%;height:auto;aspect-ratio:4/5;scroll-snap-align:start;border-radius:14px;background:#ddd}
+.bgpick{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 6px}
+.bgo{width:46px;height:46px;border-radius:50%;border:2px solid var(--line);background-size:cover;background-position:center;padding:0;font-size:10px;line-height:1.1;color:var(--soft)}
+.bgo[aria-checked="true"]{border-color:var(--blue);box-shadow:0 0 0 3px var(--sky)}
+.bgo.mine{background:var(--paper)}
+.medhint{margin:10px 0 0!important}
+.medhint:empty{display:none}
 
 /* 기록 화면 */
 .calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
@@ -321,7 +343,54 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       <button class="btn" id="installBtn" hidden>홈 화면에 추가</button>
       <button class="later" id="installLater">다음에</button>
     </div>
-    <p class="proto">코디엠 성경통독 with 마중물 공방</p>
+    <nav class="foot" aria-label="안내">
+      <button data-go="about">코디엠 통독 소개</button><span aria-hidden="true">·</span><button id="contactBtn">문의하기</button><span aria-hidden="true">·</span><button data-go="privacy">개인정보 처리방침</button>
+    </nav>
+    <p class="proto">코디엠 성경통독 with 마중물 공방 · <button class="ver" id="verBtn"></button></p>
+  </section>
+
+
+  <!-- 소개 -->
+  <section class="view" id="about" aria-label="코디엠 통독 소개">
+    <div class="top"><button class="back" data-go="home">‹ 처음으로</button></div>
+    <article class="doc">
+      <h1>코디엠 성경통독</h1>
+      <p>우리의 생명이 더욱더 온전해지기 위해서는 말씀이 채워져야 해요. 그래서 코디엠교회는 2019년부터 해마다 온 교회가 함께 성경을 처음부터 끝까지 읽고 있어요. 일요일은 쉬고 하루 3~5장씩, 1년이면 성경 66권을 모두 읽게 돼요. 매일 새벽 5시 30분에는 그날의 말씀을 함께 나누는 하임레시피가 올라와요. 사순절이나 대림절 같은 절기, 또는 특별 묵상 기간에는 하임레시피로 절기 묵상이 올라오기도 해요.</p>
+      <p>언제 시작하셔도 괜찮아요. 지난 날은 그대로 두고, 오늘 본문부터 함께 읽어요. 교회에 다니지 않으셔도, 로그인하지 않으셔도 누구나 함께할 수 있어요.</p>
+      <h2>코디엠이 무엇인가요?</h2>
+      <p>‘코디엠(KODIAM)’은 ‘코리안 디아스포라 미니스트리(Korean Diaspora Ministry)’의 약자로, 본질적으로는 생명 사역을 뜻합니다.</p>
+      <h3>사역의 정의와 목적</h3>
+      <p>전 세계에 흩어진 한민족(코리안 디아스포라)에게 복음을 전하여 생명을 얻게 하고, 그들이 살아가고 있는 땅과 사람들에게 생기를 불어넣고 살려내는 사역입니다.</p>
+      <h3>사역의 확장성</h3>
+      <p>처음에는 ‘코리안’ 중심의 시작이었으나, 나아가 차이니즈 디아스포라, 재패니즈 디아스포라 등 각 민족이 자기 디아스포라를 통해 생명을 흘려보내도록 하는 원리로 확장되었습니다. 코리안 디아스포라가 자기 역할을 하여 그 생명이 전 세계로 흘러가는 것을 핵심으로 삼고 있습니다.</p>
+      <h3>사역 콘텐츠 (하임, Hayyim)</h3>
+      <p>‘하임(Hayyim)’은 히브리어로 ‘생명’이라는 뜻이에요. 코디엠의 주요 사역 콘텐츠 영역으로 ‘하임 피플스(Hayyim Peoples)’가 있습니다. 하임워십 팀(메시지/찬양), 하임 띠어러 팀(연극), 하임 필름(영상) 등을 통해 다양한 방식으로 ‘생명의 메시지’를 세상에 풀어나가는 말씀 사역을 전개합니다.</p>
+      <button class="check" data-go="home">오늘 본문부터 함께 읽기</button>
+    </article>
+  </section>
+
+  <!-- 개인정보 처리방침 -->
+  <section class="view" id="privacy" aria-label="개인정보 처리방침">
+    <div class="top"><button class="back" data-go="home">‹ 처음으로</button></div>
+    <article class="doc">
+      <h1>개인정보 처리방침</h1>
+      <p>코디엠교회 마중물 공방(이하 ‘교회’)은 코디엠 성경통독 앱(bible.kodiam.org/app)을 쓰시는 분의 개인정보를 소중히 다루며, 다음과 같이 처리합니다.</p>
+      <h3>1. 로그인하지 않고 쓰실 때</h3>
+      <p>입력하신 이름, 읽음 표시, 묵상, 글씨 크기 같은 설정은 모두 그 휴대폰(브라우저) 안에만 저장되며, 교회나 다른 곳으로 보내지지 않습니다.</p>
+      <h3>2. ‘기록 백업’으로 로그인하실 때 처리하는 정보</h3>
+      <p>카카오 로그인: 카카오 계정의 고유 식별값과 닉네임. 구글 로그인: 구글 계정의 고유 식별값, 이름, 이메일 주소. 그리고 앱에서 남기신 통독 읽음 기록과 묵상 글을 함께 보관합니다.</p>
+      <h3>3. 이용 목적</h3>
+      <p>여러 기기에서 통독 기록과 묵상을 이어서 쓰실 수 있도록 보관하고 동기화하는 데에만 씁니다. 또한 ‘오늘 함께 읽은 성도 수’를 보여 드리기 위해, 그날 읽음을 표시한 사실을 이름 없이 숫자로만 집계합니다. 누가 읽었는지는 다른 이용자에게 보이지 않습니다.</p>
+      <h3>4. 묵상 기록에 대한 약속</h3>
+      <p>묵상은 본인만 볼 수 있도록 보관합니다. 교회는 개별 성도의 묵상 내용을 열람하거나 다른 목적으로 쓰지 않으며, 시스템 관리에 꼭 필요한 경우가 아니면 기록에 접근하지 않습니다.</p>
+      <h3>5. 보관 기간과 삭제</h3>
+      <p>로그인 기록은 이용자가 삭제를 요청하실 때까지 보관합니다. 기록 삭제나 계정 연결 해제를 원하시면 아래 이메일로 요청해 주세요. 확인 후 지체 없이 삭제합니다. 로그아웃만으로는 보관된 기록이 지워지지 않습니다.</p>
+      <h3>6. 처리를 맡기는 곳 (국외 이전 포함)</h3>
+      <p>기록 보관과 로그인 처리를 위해 Google LLC의 Firebase(서버가 미국 등 국외에 있을 수 있음)를, 카카오 로그인을 위해 (주)카카오의 서비스를 이용합니다. 앱의 통독 내용은 구글 스프레드시트에서 불러옵니다.</p>
+      <h3>7. 문의와 책임자</h3>
+      <p>개인정보 보호 책임: 코디엠교회 마중물 공방<br>이메일: <a href="mailto:kodiam@kodiam.org">kodiam@kodiam.org</a></p>
+      <p class="small">시행일: 2026년 10월 28일</p>
+    </article>
   </section>
 
   <!-- 하루 화면 -->
@@ -371,6 +440,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   <div class="in">
     <h2>기록 백업하기</h2>
     <p>로그인하지 않아도 앱은 그대로 쓸 수 있어요. 로그인하면 통독 기록과 묵상이 안전하게 보관되어, 휴대폰을 바꾸거나 다른 기기에서 열어도 이어집니다. 내 기록은 나만 볼 수 있어요.</p>
+    <p class="small">처음 로그인한 방법(카카오 또는 구글)으로 계속 로그인해 주세요. 방법이 다르면 기록이 따로 쌓여요.</p>
     <button class="btn lgk" data-login="kakao">카카오로 로그인</button>
     <button class="btn lgg" data-login="google">구글로 로그인</button>
     <p class="lgmsg" id="loginMsg" aria-live="polite"></p>
@@ -382,8 +452,41 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   <div class="in">
     <h2>기록이 백업되고 있어요</h2>
     <p><b id="acctName"></b>님의 통독 기록과 묵상이 <span id="acctProv"></span> 계정으로 안전하게 보관되고 있어요. 다른 휴대폰이나 컴퓨터에서도 같은 계정으로 로그인하면 이어서 쓸 수 있고, 기록은 본인만 볼 수 있어요.</p>
+    <p class="small">기록 삭제를 원하시면 <a href="mailto:kodiam@kodiam.org">kodiam@kodiam.org</a>로 알려 주세요.</p>
     <button class="btn" id="acctClose">확인</button>
     <button class="btn lgc" id="logoutBtn">로그아웃</button>
+  </div>
+</div>
+
+<div class="sheet" id="welcome" role="dialog" aria-label="환영합니다">
+  <div class="in">
+    <h2>코디엠 성경통독에 오신 것을 환영해요</h2>
+    <p class="wl">코디엠(KODIAM)은 ‘코리안 디아스포라 미니스트리(Korean Diaspora Ministry)’의 줄임말이에요. 세계 곳곳에 흩어져 사는 한민족이 복음으로 생명을 얻고, 자신이 살아가는 땅과 사람들에게 생기를 불어넣도록 돕는 생명 사역이지요. ‘하임(Hayyim)’은 히브리어로 ‘생명’이라는 뜻이에요. 코디엠은 찬양과 메시지, 연극, 영상으로 이 생명의 메시지를 세상에 전하고 있고, 매일의 말씀 방송 하임레시피도 그 가운데 하나예요.</p>
+    <p class="wl">우리의 생명이 더욱더 온전해지기 위해서는 말씀이 채워져야 해요. 그래서 코디엠교회는 2019년부터 해마다 온 교회가 함께 성경을 처음부터 끝까지 읽고 있어요. 일요일은 쉬고 하루 3~5장씩, 1년이면 성경 66권을 모두 읽게 돼요. 매일 새벽 5시 30분에는 그날의 말씀을 함께 나누는 하임레시피가 올라와요. 사순절이나 대림절 같은 절기, 또는 특별 묵상 기간에는 하임레시피로 절기 묵상이 올라오기도 해요.</p>
+    <p class="wl">언제 시작하셔도 괜찮아요. 지난 날은 그대로 두고, 오늘 본문부터 함께 읽어요. 교회에 다니지 않으셔도, 로그인하지 않으셔도 누구나 함께할 수 있어요.</p>
+    <button class="btn" id="welcomeGo">오늘 본문부터 함께 읽기</button>
+  </div>
+</div>
+
+<div class="sheet" id="newsSheet" role="dialog" aria-label="새로워진 점">
+  <div class="in">
+    <h2 id="newsTitle">새로워졌어요</h2>
+    <div id="newsBody"></div>
+    <button class="btn" id="newsClose">확인</button>
+  </div>
+</div>
+
+<div class="sheet" id="medSheet" role="dialog" aria-label="묵상 카드 만들기">
+  <div class="in">
+    <h2>묵상 카드</h2>
+    <p>배경을 고르지 않아도 바로 저장할 수 있어요. 글이 길면 여러 장으로 나뉘어, 인스타그램에 한 게시물로 올릴 수 있어요.</p>
+    <div class="medprev" id="medPrev"></div>
+    <div class="bgpick" id="bgPick" role="radiogroup" aria-label="카드 배경"></div>
+    <input type="file" id="bgFile" accept="image/*" hidden>
+    <button class="btn" id="medSave">이미지 저장</button>
+    <p class="medhint" id="medHint" aria-live="polite"></p>
+    <div class="grid" id="medOut"></div>
+    <button class="btn lgc" id="medClose">닫기</button>
   </div>
 </div>
 
@@ -494,7 +597,7 @@ if(!META||!META.read||!META.ans){
 let read=new Set(Object.keys(META.read).filter(k=>META.read[k].v));
 let name=load("kodiam-name","");
 function saveMeta(){save("kodiam-meta",META);save("kodiam-read",[...read])}
-function setRead(k,v){META.read[k]={v:!!v,t:Date.now()};v?read.add(k):read.delete(k);saveMeta();pushToCloud()}
+function setRead(k,v){META.read[k]={v:!!v,t:Date.now()};v?read.add(k):read.delete(k);saveMeta();pushToCloud();markReader(k,!!v)}
 
 function loadAnswer(k){return localStorage.getItem(`kodiam-ans-${k}`)||"";}
 function saveAnswer(k,text){
@@ -507,7 +610,7 @@ function saveAnswer(k,text){
 /* ---------- Firebase 초기화: 실패해도 앱은 그대로 ---------- */
 const firebaseConfig = {
   apiKey: "AIzaSyD43VjxxR4yo8e8wBiFguZHzTSt4Fde6LQ",
-  authDomain: "bible.kodiam.org", /* 같은 주소에서 로그인 처리 (_redirects 로 Firebase에 전달) */
+  authDomain: "bible.kodiam.org", /* Firebase 호스팅이 같은 주소에서 로그인 처리 */
   projectId: "kodiam-bible",
   storageBucket: "kodiam-bible.firebasestorage.app",
   messagingSenderId: "230347060877",
@@ -515,12 +618,16 @@ const firebaseConfig = {
 };
 const KAKAO_PROVIDER = "oidc.kakao"; /* Firebase에 등록한 OpenID Connect 공급자 ID */
 let auth=null,db=null;
-try{
-  if(window.firebase){
+/* 화면을 먼저 보여 준 뒤 Firebase를 뒤에서 불러옴 (실패해도 앱은 그대로) */
+const FB_VER="10.8.0";
+function loadScript(src){return new Promise((ok,no)=>{const sc=document.createElement("script");sc.src=src;sc.onload=ok;sc.onerror=no;document.head.appendChild(sc)})}
+async function loadFirebase(){
+  try{
+    for(const m of ["app","auth","firestore"])await loadScript(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-${m}-compat.js`);
     if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
     auth=firebase.auth();db=firebase.firestore();
-  }
-}catch(e){auth=null;db=null}
+  }catch(e){auth=null;db=null}
+}
 
 let appUser = load("kodiam-auth-user", null);
 /* 카카오·구글에서 돌아오는 중인지 (화면 전환 로그인) */
@@ -587,13 +694,14 @@ function renderToday(){
       <button class="btn btn-light" data-open="${k}">오늘 분량 보기</button>
       <button class="btn btn-ghost ${done?"done":""}" data-toggle="${k}">${done?"읽었어요 ✓":"다 읽었어요"}</button>
     </div>
+    <p class="cnt" id="homeCnt" style="display:none"></p>
     ${!done&&hasMissed()?`<p class="together">지난 날은 그대로 두셔도 괜찮아요. 오늘 본문부터 함께 읽어요.</p>`:""}`;
 }
 function hasMissed(){const k=key(today);return READING.some(r=>r.startsWith(YEAR+"-")&&r<k&&!read.has(r))}
 function stripHTML(base,sel){
   const start=new Date(base);start.setDate(base.getDate()-base.getDay());const tk=key(today);let h="";
   for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const k=key(d);
-    const cls=["dayc",d.getDay()===0?"rest":"",read.has(k)?"read":"",k===sel?"now":"",k===tk?"today":""].join(" ");
+    const cls=["dayc",d.getDay()===0?"rest":"",read.has(k)?"read":"",k===sel?"now":"",k===tk?"istoday":""].join(" ");
     h+=`<button class="${cls}" data-open="${k}" ${k===sel?'aria-current="date"':""} aria-label="${fmt(d)}${k===tk?", 오늘":""}${read.has(k)?", 읽음":""}">${WD[d.getDay()]}<b>${d.getDate()}</b><span class="dot"></span></button>`}
   return h;
 }
@@ -608,7 +716,7 @@ document.getElementById("hPrev").onclick=()=>{homeBase=shift(homeBase,-7);render
 document.getElementById("hNext").onclick=()=>{homeBase=shift(homeBase,7);renderStrip()};
 document.getElementById("dPrev").onclick=()=>{dayBase=shift(dayBase,-7);renderDayStrip()};
 document.getElementById("dNext").onclick=()=>{dayBase=shift(dayBase,7);renderDayStrip()};
-function renderHome(){greet();progress();renderToday();renderStrip()}
+function renderHome(){greet();progress();renderToday();renderStrip();refreshCounts()}
 
 /* ---------- 하루 화면 ---------- */
 function openDay(k){
@@ -649,7 +757,7 @@ function openDay(k){
             <textarea id="myAnswer" placeholder="질문에 대한 묵상과 생각을 기록해 보세요...">${esc(loadAnswer(k))}</textarea>
             <div class="answer-tools">
               <span id="saveStatus">작성 시 실시간 저장됩니다</span>
-              <button type="button" id="copyAnswerBtn">묵상 복사</button>
+              <span class="anbtns"><button type="button" id="copyAnswerBtn">묵상 복사</button><button type="button" id="medCardBtn">묵상 카드 만들기</button></span>
             </div>
           </div>
         </div>
@@ -657,6 +765,7 @@ function openDay(k){
         <button class="close" id="closeGuide">티저 카드 다시 보기</button>
       </div>
       ${ytLink("하임레시피 듣기",p.youtube)}
+      <p class="cnt daycnt" id="dayCnt" style="display:none"></p>
       <button class="check ${done?"done":""}" data-toggle="${k}">${done?"읽었어요 ✓ (다시 누르면 취소)":"성경 본문을 다 읽었어요"}</button>
       <p class="note">가이드와 방송은 읽기를 돕는 길잡이예요. 진도에는 본문 읽기만 기록돼요.</p>`;
     
@@ -672,6 +781,8 @@ function openDay(k){
         }
       });
     }
+    const medBtn=document.getElementById("medCardBtn");
+    if(medBtn&&ansArea)medBtn.onclick=()=>{if(!ansArea.value.trim()){alert("먼저 묵상을 적어 주세요.");return}openMed(k,p,ansArea.value)};
     if(copyBtn&&ansArea){
       copyBtn.addEventListener("click",async()=>{
         if(!ansArea.value.trim()){alert("기록된 묵상 내용이 없습니다.");return}
@@ -703,6 +814,7 @@ function openDay(k){
     }
   }
   applyFS();
+  refreshCounts();
   show("day");
 }
 function ytLink(t,url){const ok=/^https:\/\/(www\.|m\.)?(youtube\.com|youtu\.be)\//.test(url||"");
@@ -778,6 +890,169 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-fs]");if(!
   fsI=Math.min(FS.length-1,Math.max(0,fsI+ +b.dataset.fs));save("kodiam-fs",fsI);applyFS()});
 applyFS();
 
+/* ---------- 버전과 새로워진 점 ---------- */
+const APP_VERSION="2026.10.28";
+const CHANGES=[
+  {v:"2026.10.28",items:[
+    "처음 오신 분을 위한 소개 화면이 생겼어요.",
+    "내 묵상을 사진 카드로 저장해 인스타그램에 올릴 수 있어요.",
+    "기록을 백업한 성도들이 오늘 몇 명 함께 읽었는지 보여요."
+  ]}
+];
+function showVersion(){const b=document.getElementById("verBtn");if(b)b.textContent="버전 "+APP_VERSION}
+function openNews(all){
+  const list=all?CHANGES:CHANGES.slice(0,1);
+  document.getElementById("newsTitle").textContent=all?"새로워진 점":"새로워졌어요";
+  document.getElementById("newsBody").innerHTML=list.map(c=>`<div class="newsv"><b>버전 ${c.v}</b><ul>${c.items.map(i=>`<li>${esc(i)}</li>`).join("")}</ul></div>`).join("");
+  document.getElementById("newsSheet").classList.add("on");
+}
+function askName(){if(!name){document.getElementById("ask").classList.add("on");setTimeout(()=>document.getElementById("nameIn").focus(),100)}}
+function firstVisitFlow(){
+  const seen=load("kodiam-seen-ver",""),isNew=!name&&!Object.keys(META.read).length&&!load("kodiam-welcomed",false);
+  if(isNew){document.getElementById("welcome").classList.add("on");save("kodiam-seen-ver",APP_VERSION);return}
+  save("kodiam-welcomed",true);
+  if(seen!==APP_VERSION){save("kodiam-seen-ver",APP_VERSION);if(seen||name)openNews(false)}
+  askName();
+}
+document.getElementById("welcomeGo").onclick=()=>{save("kodiam-welcomed",true);document.getElementById("welcome").classList.remove("on");askName()};
+document.getElementById("newsClose").onclick=()=>{document.getElementById("newsSheet").classList.remove("on");askName()};
+document.getElementById("verBtn").onclick=()=>openNews(true);
+document.getElementById("contactBtn").onclick=()=>{
+  const ua=navigator.userAgent,dev=/android/i.test(ua)?"안드로이드":/iphone|ipad|ipod/i.test(ua)?"아이폰/아이패드":/windows/i.test(ua)?"윈도우 PC":/mac/i.test(ua)?"맥":"기타";
+  const br=/KAKAOTALK/i.test(ua)?"카카오톡 안":/SamsungBrowser/i.test(ua)?"삼성 인터넷":/Whale/i.test(ua)?"웨일":/Edg\//i.test(ua)?"엣지":/Chrome/i.test(ua)?"크롬":/Safari/i.test(ua)?"사파리":"기타";
+  const body=`문의 내용:\n\n\n\n----\n앱 버전: ${APP_VERSION}\n기기: ${dev} / ${br}\n설치 앱으로 실행: ${matchMedia("(display-mode: standalone)").matches||navigator.standalone?"예":"아니요"}\n보낸 날: ${fmt(new Date())}`;
+  location.href=`mailto:kodiam@kodiam.org?subject=${encodeURIComponent("[코디엠 통독 앱 문의]")}&body=${encodeURIComponent(body)}`;
+};
+
+/* ---------- 오늘 함께 읽은 성도 수 (로그인한 성도만, 이름 없이 숫자로) ---------- */
+const CNT={};
+async function fetchCount(k){
+  if(!db)return null;const c=CNT[k];if(c&&Date.now()-c.t<60000)return c.n;
+  try{const q=db.collection("daily").doc(k).collection("readers");let n;
+    if(typeof q.count==="function"){const sn=await q.count().get();n=sn.data().count}else{const sn=await q.get();n=sn.size}
+    CNT[k]={n,t:Date.now()};return n}catch(e){return null}
+}
+async function showCount(k,id){
+  const el=document.getElementById(id);if(!el)return;
+  const n=await fetchCount(k);if(n==null){el.style.display="none";return}
+  const isT=k===key(today);
+  el.innerHTML=n>0?`${isT?"오늘 ":""}이 본문을 함께 읽은 성도 <b>${n}명</b>`:(isT?"오늘 이 본문을 가장 먼저 읽어 보세요":"아직 이 날 함께 읽은 기록이 없어요");
+  el.style.display="";
+}
+function refreshCounts(){
+  if(!db)return;
+  if(document.getElementById("homeCnt"))showCount(key(today),"homeCnt");
+  if(document.getElementById("dayCnt")&&PLAN[curDay])showCount(curDay,"dayCnt");
+}
+async function markReader(k,v){
+  if(!db||!auth||!auth.currentUser||!PLAN[k])return;
+  const ref=db.collection("daily").doc(k).collection("readers").doc(auth.currentUser.uid);
+  try{if(v)await ref.set({t:firebase.firestore.FieldValue.serverTimestamp()});else await ref.delete()}catch(e){}
+  delete CNT[k];refreshCounts();
+}
+
+/* ---------- 묵상 카드 (1080×1350 피드용) ---------- */
+const MW=1080,MH=1350,MX=110,GB="'Gowun Batang', 'Nanum Myeongjo', serif",MS="'Noto Sans KR', sans-serif";
+const BGS=[
+  {id:"blue",type:"color",bg:"#0A4DA8",fg:"#F8F3F0",sub:"#A9C6EA",label:"코디엠 파랑"},
+  {id:"cream",type:"color",bg:"#F8F3F0",fg:"#0A4DA8",sub:"#8C7F79",label:"크림"},
+  {id:"navy",type:"color",bg:"#163F73",fg:"#F8F3F0",sub:"#A9CCF2",label:"짙은 파랑"},
+  {id:"ovsky",type:"photo",src:"bg/ovsky.jpg",thumb:"bg/ovsky-s.jpg",shade:"rgba(0,0,0,0)",fg:"#FFFFFF",sub:"rgba(255,255,255,.85)",label:"Overflowing 하늘"},
+  {id:"ovmint",type:"photo",src:"bg/ovmint.jpg",thumb:"bg/ovmint-s.jpg",shade:"rgba(0,0,0,0)",fg:"#5B4E96",sub:"#6E6A8F",label:"Overflowing 민트"},
+  {id:"flowers",type:"photo",src:"bg/flowers.jpg",thumb:"bg/flowers-s.jpg",shade:"rgba(250,250,250,.68)",fg:"#1B2D44",sub:"#56677C",label:"꽃 그림"},
+  {id:"water",type:"photo",src:"bg/water.jpg",thumb:"bg/water-s.jpg",shade:"rgba(0,30,50,.3)",fg:"#FFFFFF",sub:"rgba(255,255,255,.8)",label:"물결"},
+  {id:"dandelion",type:"photo",src:"bg/dandelion.jpg",thumb:"bg/dandelion-s.jpg",shade:"rgba(0,20,40,.18)",fg:"#FFFFFF",sub:"rgba(255,255,255,.82)",label:"민들레 홀씨"},
+  {id:"daisy",type:"photo",src:"bg/daisy.jpg",thumb:"bg/daisy-s.jpg",shade:"rgba(8,16,24,.52)",fg:"#FFFFFF",sub:"rgba(255,255,255,.78)",label:"데이지"},
+  {id:"iris",type:"photo",src:"bg/iris.jpg",thumb:"bg/iris-s.jpg",shade:"rgba(246,245,243,.74)",fg:"#1B2D44",sub:"#56677C",label:"붓꽃"},
+  {id:"mine",type:"mine",shade:"rgba(8,16,24,.5)",fg:"#FFFFFF",sub:"rgba(255,255,255,.78)",label:"내 사진"}
+];
+let MED=null;const IMG={};
+function loadImg(src){return IMG[src]||(IMG[src]=new Promise((ok,no)=>{const im=new Image();im.onload=()=>ok(im);im.onerror=no;im.src=src}))}
+function coverDraw(c,im){const s=Math.max(MW/im.width,MH/im.height),w=im.width*s,h=im.height*s;c.drawImage(im,(MW-w)/2,(MH-h)/2,w,h)}
+function medLines(c,text,size){
+  c.font=`400 ${size}px ${GB}`;const out=[];
+  text.replace(/\r/g,"").split("\n").forEach(par=>{
+    if(!par.trim()){if(out.length&&out[out.length-1].t!=="")out.push({t:"",end:true});return}
+    const ls=wrapT(c,par.trim(),MW-MX*2);ls.forEach((l,i)=>out.push({t:l,end:i===ls.length-1}))});
+  while(out.length&&out[out.length-1].t==="")out.pop();
+  return out;
+}
+function medLayout(c,text,q){
+  const TOP=300,BOT=1140;
+  c.font=`400 30px ${MS}`;const ql=q?wrapT(c,q,MW-MX*2).slice(0,4):[];
+  const firstTop=ql.length?TOP+ql.length*46+56:TOP;
+  for(const size of [50,46,42,38]){
+    const lines=medLines(c,text,size),lh=Math.round(size*1.7);
+    if(firstTop+lines.length*lh<=BOT)return{size,lh,ql,pages:[lines],firstTop,TOP};
+  }
+  const size=38,lh=Math.round(size*1.7),lines=medLines(c,text,size),pages=[];let i=0,first=true;
+  while(i<lines.length&&pages.length<20){
+    const top=first?firstTop:TOP,cap=Math.max(1,Math.floor((BOT-top)/lh));
+    let end=Math.min(lines.length,i+cap);
+    if(end<lines.length){for(let j=end;j>i+Math.floor(cap/2);j--){const L=lines[j-1];if(L.end||/[.?!。…다요죠까]$/.test(L.t)){end=j;break}}}
+    const pg=lines.slice(i,end);while(pg.length&&pg[0].t==="")pg.shift();pages.push(pg);i=end;first=false;
+  }
+  return{size,lh,ql,pages,firstTop,TOP};
+}
+function medDraw(c,bg,img,lay,pi,head,foot){
+  c.textBaseline="top";
+  if(bg.type==="color"){c.fillStyle=bg.bg;c.fillRect(0,0,MW,MH)}
+  else{c.fillStyle="#222";c.fillRect(0,0,MW,MH);if(img)coverDraw(c,img);c.fillStyle=bg.shade;c.fillRect(0,0,MW,MH)}
+  c.fillStyle=bg.sub;c.font=`500 28px ${MS}`;c.fillText("나의 묵상",MX,130);
+  c.font=`400 28px ${MS}`;c.fillText(head,MX,176);
+  c.strokeStyle=bg.sub;c.lineWidth=2;c.beginPath();c.moveTo(MX,240);c.lineTo(MX+120,240);c.stroke();
+  let y=lay.TOP;
+  if(pi===0&&lay.ql.length){c.font=`400 30px ${MS}`;c.fillStyle=bg.sub;lay.ql.forEach(l=>{c.fillText(l,MX,y);y+=46});y=lay.firstTop}
+  c.font=`400 ${lay.size}px ${GB}`;c.fillStyle=bg.fg;
+  lay.pages[pi].forEach(L=>{if(L.t)c.fillText(L.t,MX,y);y+=L.t?lay.lh:Math.round(lay.lh*.6)});
+  c.font=`400 24px ${MS}`;c.fillStyle=bg.sub;c.fillText(foot,MX,1240);
+  if(lay.pages.length>1){const t=`${pi+1}/${lay.pages.length}`;c.fillText(t,MW-MX-c.measureText(t).width,1240)}
+}
+async function renderMed(){
+  const {p,text,k,bg}=MED,box=document.getElementById("medPrev");
+  let img=null;
+  try{if(bg.type==="photo")img=await loadImg(bg.src);else if(bg.type==="mine")img=MED.mine||null}catch(e){img=null}
+  try{await Promise.all([document.fonts.load(`400 46px "Gowun Batang"`,text),document.fonts.load(`400 28px "Noto Sans KR"`,"나의 묵상"+(p.think||"")+p.label)])}catch(e){}
+  const tmp=document.createElement("canvas").getContext("2d");
+  const lay=medLayout(tmp,text,p.think||"");
+  const d=fromKey(k),head=`${p.label} · ${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일`;
+  const foot="코디엠 성경통독  bible.kodiam.org/app";
+  box.innerHTML="";MED.canvases=[];
+  lay.pages.forEach((_,i)=>{const cv=document.createElement("canvas");cv.width=MW;cv.height=MH;medDraw(cv.getContext("2d"),bg,img,lay,i,head,foot);
+    cv.setAttribute("aria-label",`묵상 카드 ${i+1}/${lay.pages.length}`);box.appendChild(cv);MED.canvases.push(cv)});
+  document.getElementById("medHint").textContent=lay.pages.length>1?`글이 길어서 ${lay.pages.length}장으로 나뉘었어요. 옆으로 넘겨 보세요.`:"";
+  document.getElementById("medOut").innerHTML="";
+}
+function renderBgPick(){
+  document.getElementById("bgPick").innerHTML=BGS.map(b=>{
+    const st=b.type==="color"?`background:${b.bg}`:b.type==="photo"?`background-image:url(${b.thumb})`:(MED.mineThumb?`background-image:url(${MED.mineThumb})`:"");
+    return `<button role="radio" aria-checked="${MED.bg.id===b.id}" aria-label="${b.label}" data-bg="${b.id}" class="bgo ${b.type==="mine"&&!MED.mineThumb?"mine":""}" style="${st}">${b.type==="mine"&&!MED.mineThumb?"내 사진":""}</button>`}).join("");
+}
+function openMed(k,p,text){
+  MED={k,p,text,bg:BGS[0],mine:MED&&MED.mine,mineThumb:MED&&MED.mineThumb};
+  renderBgPick();document.getElementById("medSheet").classList.add("on");renderMed();
+}
+document.getElementById("bgPick").addEventListener("click",e=>{
+  const b=e.target.closest("[data-bg]");if(!b)return;const bg=BGS.find(x=>x.id===b.dataset.bg);
+  if(bg.type==="mine"&&(!MED.mine||MED.bg.id==="mine")){document.getElementById("bgFile").click();return}
+  MED.bg=bg;renderBgPick();renderMed();
+});
+document.getElementById("bgFile").onchange=e=>{
+  const f=e.target.files&&e.target.files[0];if(!f)return;const url=URL.createObjectURL(f);
+  const im=new Image();im.onload=()=>{MED.mine=im;MED.mineThumb=url;MED.bg=BGS.find(x=>x.id==="mine");renderBgPick();renderMed()};im.src=url;e.target.value="";
+};
+document.getElementById("medSave").onclick=async()=>{
+  if(!MED||!MED.canvases)return;const hint=document.getElementById("medHint");
+  const blobs=await Promise.all(MED.canvases.map(cv=>new Promise(ok=>cv.toBlob(ok,"image/png"))));
+  const files=blobs.map((b,i)=>new File([b],`묵상_${MED.k}_${i+1}.png`,{type:"image/png"}));
+  if(navigator.canShare&&navigator.canShare({files})){try{await navigator.share({files,title:"나의 묵상"});return}catch(e){if(e&&e.name==="AbortError")return}}
+  const out=document.getElementById("medOut");out.innerHTML="";
+  MED.canvases.forEach((cv,i)=>{const f=document.createElement("figure"),im=new Image();im.src=cv.toDataURL("image/png");im.alt=`묵상 카드 ${i+1}`;
+    const cap=document.createElement("figcaption");cap.textContent=files[i].name;f.append(im,cap);out.appendChild(f)});
+  hint.textContent="아래 이미지를 길게 누르거나(휴대폰) 오른쪽 클릭해서(컴퓨터) 저장하세요.";
+};
+document.getElementById("medClose").onclick=()=>document.getElementById("medSheet").classList.remove("on");
+
 /* ---------- 기록 ---------- */
 let viewM=today.getMonth();
 function renderCal(){
@@ -803,7 +1078,7 @@ function renderList(){
     if(listAll)h+=`<h3 class="pmonth">${m+1}월</h3>`;
     if(!ks.length){h+=`<p class="pempty">이 달의 통독표는 아직 시트에 없어요.</p>`;return}
     ks.forEach(k=>{const d=fromKey(k),p=PLAN[k],r=read.has(k);
-      h+=`<button class="prow ${r?"read":""} ${k===tk?"today":""}" data-open="${k}" aria-label="${fmt(d)} ${p.label}${r?", 읽음":""}">
+      h+=`<button class="prow ${r?"read":""} ${k===tk?"istoday":""}" data-open="${k}" aria-label="${fmt(d)} ${p.label}${r?", 읽음":""}">
         <span class="pd"><b>${d.getDate()}</b>${WD[d.getDay()]}</span>
         <span class="pp">${p.label}${p.title?`<small>${esc(p.title)}</small>`:""}</span>
         <span class="ps" aria-hidden="true">${r?"✓":""}</span></button>`})});
@@ -859,7 +1134,8 @@ function handleLogout(){
   if(auth&&auth.currentUser)auth.signOut();
   appUser=null;save("kodiam-auth-user",null);updateAuthUI();
 }
-if(auth){
+function startAuth(){
+  if(!auth)return;
   auth.getRedirectResult().then(finishLogin).catch(err=>{if(err&&err.code)console.error(err)}).finally(()=>setPending(false));
   setTimeout(()=>{if(authPending)setPending(false)},15000);
   auth.onAuthStateChanged(user=>{
@@ -894,6 +1170,7 @@ async function syncFromCloud(uid) {
     read=new Set(Object.keys(META.read).filter(k=>META.read[k].v));
     saveMeta();
     if(localNewer)await pushNow();
+    { const tk=key(today); if(read.has(tk)) markReader(tk,true); }
     refreshViews();
   } catch (e) {
     console.error("클라우드 동기화 실패:", e);
@@ -971,12 +1248,14 @@ document.addEventListener("click", e => {
 document.getElementById("prevM").onclick=()=>{if(viewM>0){viewM--;renderCal()}};
 document.getElementById("nextM").onclick=()=>{if(viewM<11){viewM++;renderCal()}};
 document.getElementById("askForm").onsubmit=e=>{e.preventDefault();name=document.getElementById("nameIn").value.trim();save("kodiam-name",name);document.getElementById("ask").classList.remove("on");greet()};
-if(!name){document.getElementById("ask").classList.add("on");setTimeout(()=>document.getElementById("nameIn").focus(),100)}
 renderHome();
 updateAuthUI();
+showVersion();
+firstVisitFlow();
+loadFirebase().then(()=>{startAuth();updateAuthUI();refreshCounts()});
 
 /* ---------- PWA 홈 화면 추가 ---------- */
-if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js?v="+APP_VERSION).catch(()=>{});
 (function(){
   const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
   if(standalone||load("kodiam-install-later",false))return;

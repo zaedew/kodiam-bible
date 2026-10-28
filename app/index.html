@@ -891,7 +891,8 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-fs]");if(!
 applyFS();
 
 /* ---------- 버전과 새로워진 점 ---------- */
-const APP_VERSION="2026.10.28";
+const APP_VERSION="2026.10.28-2";
+const FIXES=[{v:"2026.10.28-2",items:["묵상 카드에서 낱말이 줄 끝에서 쪼개지지 않게 했어요.","컴퓨터에서는 묵상 카드가 바로 다운로드 폴더에 저장돼요."]}];
 const CHANGES=[
   {v:"2026.10.28",items:[
     "처음 오신 분을 위한 소개 화면이 생겼어요.",
@@ -901,17 +902,17 @@ const CHANGES=[
 ];
 function showVersion(){const b=document.getElementById("verBtn");if(b)b.textContent="버전 "+APP_VERSION}
 function openNews(all){
-  const list=all?CHANGES:CHANGES.slice(0,1);
+  const list=all?[...FIXES,...CHANGES]:CHANGES.slice(0,1);
   document.getElementById("newsTitle").textContent=all?"새로워진 점":"새로워졌어요";
   document.getElementById("newsBody").innerHTML=list.map(c=>`<div class="newsv"><b>버전 ${c.v}</b><ul>${c.items.map(i=>`<li>${esc(i)}</li>`).join("")}</ul></div>`).join("");
   document.getElementById("newsSheet").classList.add("on");
 }
 function askName(){if(!name){document.getElementById("ask").classList.add("on");setTimeout(()=>document.getElementById("nameIn").focus(),100)}}
 function firstVisitFlow(){
-  const seen=load("kodiam-seen-ver",""),isNew=!name&&!Object.keys(META.read).length&&!load("kodiam-welcomed",false);
-  if(isNew){document.getElementById("welcome").classList.add("on");save("kodiam-seen-ver",APP_VERSION);return}
+  const latest=CHANGES[0].v,seen=load("kodiam-seen-ver",""),isNew=!name&&!Object.keys(META.read).length&&!load("kodiam-welcomed",false);
+  if(isNew){document.getElementById("welcome").classList.add("on");save("kodiam-seen-ver",latest);return}
   save("kodiam-welcomed",true);
-  if(seen!==APP_VERSION){save("kodiam-seen-ver",APP_VERSION);if(seen||name)openNews(false)}
+  if(seen!==latest&&!seen.startsWith(latest+"-")){save("kodiam-seen-ver",latest);if(seen||name)openNews(false)}
   askName();
 }
 document.getElementById("welcomeGo").onclick=()=>{save("kodiam-welcomed",true);document.getElementById("welcome").classList.remove("on");askName()};
@@ -969,17 +970,28 @@ const BGS=[
 let MED=null;const IMG={};
 function loadImg(src){return IMG[src]||(IMG[src]=new Promise((ok,no)=>{const im=new Image();im.onload=()=>ok(im);im.onerror=no;im.src=src}))}
 function coverDraw(c,im){const s=Math.max(MW/im.width,MH/im.height),w=im.width*s,h=im.height*s;c.drawImage(im,(MW-w)/2,(MH-h)/2,w,h)}
+function wrapWords(c,t,mw){
+  const out=[];let cur="";
+  t.split(/(\s+)/).forEach(tok=>{
+    if(!tok)return;
+    const n=cur+tok;
+    if(c.measureText(n.trimEnd()).width<=mw){cur=n;return}
+    if(cur.trim())out.push(cur.trimEnd());cur=tok.trimStart();
+    while(c.measureText(cur).width>mw){let i=cur.length;while(i>1&&c.measureText(cur.slice(0,i)).width>mw)i--;out.push(cur.slice(0,i));cur=cur.slice(i)}
+  });
+  if(cur.trim())out.push(cur.trimEnd());return out;
+}
 function medLines(c,text,size){
   c.font=`400 ${size}px ${GB}`;const out=[];
   text.replace(/\r/g,"").split("\n").forEach(par=>{
     if(!par.trim()){if(out.length&&out[out.length-1].t!=="")out.push({t:"",end:true});return}
-    const ls=wrapT(c,par.trim(),MW-MX*2);ls.forEach((l,i)=>out.push({t:l,end:i===ls.length-1}))});
+    const ls=wrapWords(c,par.trim(),MW-MX*2);ls.forEach((l,i)=>out.push({t:l,end:i===ls.length-1}))});
   while(out.length&&out[out.length-1].t==="")out.pop();
   return out;
 }
 function medLayout(c,text,q){
   const TOP=300,BOT=1140;
-  c.font=`400 30px ${MS}`;const ql=q?wrapT(c,q,MW-MX*2).slice(0,4):[];
+  c.font=`400 30px ${MS}`;const ql=q?wrapWords(c,q,MW-MX*2).slice(0,4):[];
   const firstTop=ql.length?TOP+ql.length*46+56:TOP;
   for(const size of [50,46,42,38]){
     const lines=medLines(c,text,size),lh=Math.round(size*1.7);
@@ -1045,6 +1057,11 @@ document.getElementById("medSave").onclick=async()=>{
   if(!MED||!MED.canvases)return;const hint=document.getElementById("medHint");
   const blobs=await Promise.all(MED.canvases.map(cv=>new Promise(ok=>cv.toBlob(ok,"image/png"))));
   const files=blobs.map((b,i)=>new File([b],`묵상_${MED.k}_${i+1}.png`,{type:"image/png"}));
+  const mobile=/android|iphone|ipad|ipod/i.test(navigator.userAgent);
+  if(!mobile){
+    files.forEach((f,i)=>setTimeout(()=>{const a=document.createElement("a");a.href=URL.createObjectURL(f);a.download=f.name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000)},i*400));
+    hint.textContent=`다운로드 폴더에 ${files.length}장을 저장했어요. (${files.map(f=>f.name).join(", ")})`;return;
+  }
   if(navigator.canShare&&navigator.canShare({files})){try{await navigator.share({files,title:"나의 묵상"});return}catch(e){if(e&&e.name==="AbortError")return}}
   const out=document.getElementById("medOut");out.innerHTML="";
   MED.canvases.forEach((cv,i)=>{const f=document.createElement("figure"),im=new Image();im.src=cv.toDataURL("image/png");im.alt=`묵상 카드 ${i+1}`;

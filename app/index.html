@@ -268,6 +268,13 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .today.ssn .amenok{align-self:center;font-weight:700;padding:0 6px}
 .sslink{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;background:#E3F1F6;border:1px solid #B9DCE8;color:#14465A;border-radius:14px;padding:12px 14px;margin:-6px 0 16px}
 .sslink b{font-size:14px}.sslink span{font-size:14px}
+.sstxt{display:flex;flex-direction:column;gap:2px}
+.sslink.hasbn{padding:0;overflow:hidden;gap:0}
+.sslink.hasbn .sstxt{padding:10px 14px 12px}
+.ssbanner{display:block;width:100%;aspect-ratio:1568/490;background-size:cover;background-position:center;background-color:#E0E0E1}
+.today.ssn.hasbn{padding-top:0;overflow:hidden}
+.ssbanner.card{width:calc(100% + 44px);margin:0 -22px 18px}
+.ssbanner.head{border-radius:18px;margin:0 0 16px}
 .ssintro{background:var(--sky);border-radius:16px;padding:14px 16px;margin:0 0 14px;font-size:calc(15px * var(--gs,1));line-height:1.8;color:var(--ink)}
 .ssintro p{margin:0 0 8px}.ssintro p:last-child{margin:0}
 .ssdoc{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px 20px 24px}
@@ -947,8 +954,8 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-fs]");if(!
 applyFS();
 
 /* ---------- 버전과 새로워진 점 ---------- */
-const APP_VERSION="2026.10.29-2";
-const FIXES=[{v:"2026.10.29-2",items:["절기 묵상 자료(기쁨의 50일)를 연결했어요."]},{v:"2026.10.29",items:["절기 묵상을 앱에서 함께할 수 있도록 준비했어요."]},{v:"2026.10.28-5",items:["‘새로워진 점’이 최신 버전부터 차례로 보이게 했어요."]},{v:"2026.10.28-3",items:["소개 페이지와 개인정보 처리방침을 다듬었어요."]},{v:"2026.10.28-2",items:["묵상 카드에서 낱말이 줄 끝에서 쪼개지지 않게 했어요.","컴퓨터에서는 묵상 카드가 바로 다운로드 폴더에 저장돼요."]}];
+const APP_VERSION="2026.10.29-3";
+const FIXES=[{v:"2026.10.29-3",items:["절기 묵상 바로가기에 절기 디자인을 넣었어요."]},{v:"2026.10.29-2",items:["절기 묵상 자료(기쁨의 50일)를 연결했어요."]},{v:"2026.10.29",items:["절기 묵상을 앱에서 함께할 수 있도록 준비했어요."]},{v:"2026.10.28-5",items:["‘새로워진 점’이 최신 버전부터 차례로 보이게 했어요."]},{v:"2026.10.28-3",items:["소개 페이지와 개인정보 처리방침을 다듬었어요."]},{v:"2026.10.28-2",items:["묵상 카드에서 낱말이 줄 끝에서 쪼개지지 않게 했어요.","컴퓨터에서는 묵상 카드가 바로 다운로드 폴더에 저장돼요."]}];
 const CHANGES=[
   {v:"2026.10.28-4",items:[
     "‘오늘 나에게 주신 말씀’ 칸이 생겼어요. 성경 앱에서 구절을 복사해 붙여 넣으세요.",
@@ -1020,14 +1027,17 @@ function buildSeason(rows){
   rows.forEach(r=>{const dk=dateKeyOf(r.date,YEAR);if(dk&&r.title)SEASON[dk]=r});
 }
 const ssKeys=name=>Object.keys(SEASON).filter(k=>SEASON[k].season===name).sort();
+/* 절기 메인 디자인: 절기 탭의 banner 칸에 app/season 폴더의 파일 이름을 적음 */
+const ssBnr=r=>(r&&/^[\w.-]+\.(jpg|jpeg|png|webp)$/i.test(r.banner||""))?`season/${r.banner}`:"";
+function ssBanner(r,cls){const u=ssBnr(r);return u?`<span class="ssbanner ${cls||""}" style="background-image:url('${u}')" role="img" aria-label="${esc(r.season)} 디자인"></span>`:""}
 function ssLink(k){const r=SEASON[k];if(!r)return"";
-  return `<button class="sslink" data-season="${k}"><b>${esc(r.season)} · ${+r.day}일째</b><span>${esc(r.title)} ›</span></button>`}
+  return `<button class="sslink ${ssBnr(r)?"hasbn":""}" data-season="${k}">${ssBanner(r)}<span class="sstxt"><b>${esc(r.season)} · ${+r.day}일째</b><span>${esc(r.title)} ›</span></span></button>`}
 function renderSeasonCard(){
   const box=document.getElementById("seasonBox");if(!box)return;
   const k=key(today),r=SEASON[k];if(!r){box.hidden=true;return}
   const st=loadSS(k),keys=ssKeys(r.season),done=keys.filter(x=>loadSS(x).amen).length;
-  box.hidden=false;
-  box.innerHTML=`<div class="date">${esc(r.season)} · ${+r.day}일째${r.part?` · ${esc(r.part)}`:""}</div>
+  box.hidden=false;box.classList.toggle("hasbn",!!ssBnr(r));
+  box.innerHTML=`${ssBanner(r,"card")}<div class="date">${esc(r.season)} · ${+r.day}일째${r.part?` · ${esc(r.part)}`:""}</div>
     <div class="passage">${esc(r.title)}</div>
     <p class="together" style="margin:-8px 0 16px">${esc(r.seed_ref)}</p>
     <div class="row"><button class="btn btn-light" data-season="${k}">오늘 묵상하기</button>${st.amen?`<span class="amenok">아멘 ✓</span>`:""}</div>
@@ -1042,6 +1052,7 @@ function openSeason(k){
   document.getElementById("ssPrev").onclick=()=>{if(i>0)openSeason(keys[i-1])};
   document.getElementById("ssNext").onclick=()=>{if(i<keys.length-1)openSeason(keys[i+1])};
   document.getElementById("ssBody").innerHTML=`
+    ${ssBanner(r,"head")}
     <div class="dhead"><small>${fmt(d)} · ${esc(r.season)} ${+r.day}일째${r.part?` · ${esc(r.part)}`:""}</small><h1>${esc(r.title)}</h1></div>
     ${r.intro?`<div class="ssintro">${paras(r.intro)}</div>`:""}
     <article class="ssdoc">

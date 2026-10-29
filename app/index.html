@@ -264,6 +264,26 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .wordrow{display:flex;gap:10px;align-items:center;margin-top:8px}
 .wordrow input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font:inherit;font-size:14px;background:var(--paper);color:var(--ink)}
 
+.today.ssn{background:#1F6F8B;margin-top:14px}
+.today.ssn .amenok{align-self:center;font-weight:700;padding:0 6px}
+.sslink{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;background:#E3F1F6;border:1px solid #B9DCE8;color:#14465A;border-radius:14px;padding:12px 14px;margin:-6px 0 16px}
+.sslink b{font-size:14px}.sslink span{font-size:14px}
+.ssintro{background:var(--sky);border-radius:16px;padding:14px 16px;margin:0 0 14px;font-size:calc(15px * var(--gs,1));line-height:1.8;color:var(--ink)}
+.ssintro p{margin:0 0 8px}.ssintro p:last-child{margin:0}
+.ssdoc{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px 20px 24px}
+.sstag{display:inline-block;margin:22px 0 8px;font-size:13px;font-weight:700;color:#1F6F8B;background:#E3F1F6;border-radius:999px;padding:3px 12px}
+.ssdoc .ghead .sstag{margin:0}
+.ssverse{margin:0;font-family:"Gowun Batang",serif;font-size:calc(18px * var(--gs,1));line-height:1.85}
+.ssverse cite{display:block;margin-top:8px;font-style:normal;font-family:"Noto Sans KR",sans-serif;font-size:14px;color:var(--soft);text-align:right}
+.ssnote p{margin:0 0 10px;font-size:calc(16px * var(--gs,1));line-height:1.85}
+.sswater{font-family:"Gowun Batang",serif;font-weight:700;font-size:calc(18px * var(--gs,1));margin:0 0 4px;line-height:1.7}
+.ssguide{margin:0 0 10px;color:var(--soft);font-size:calc(14px * var(--gs,1));line-height:1.7}
+.ssmt{margin:0 0 4px;font-weight:700;font-size:calc(16px * var(--gs,1))}
+.ssdoc textarea{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-family:"Gowun Batang",serif;font-size:calc(16px * var(--gs,1));line-height:1.75;background:var(--paper);color:var(--ink);resize:vertical}
+.check.amen{margin-top:12px;font-family:"Gowun Batang",serif;font-size:19px;letter-spacing:.1em}
+.ssmission{margin-top:4px;width:100%;border:1.5px solid #1F6F8B;background:none;color:#1F6F8B;border-radius:14px;padding:12px;font-weight:700}
+.ssmission.on{background:#E3F1F6}
+
 /* 기록 화면 */
 .calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .calhead h2{margin:0;font-size:20px}
@@ -341,6 +361,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     </div>
 
     <div class="today" id="todayBox"></div>
+    <div class="today ssn" id="seasonBox" hidden></div>
 
     <div class="week">
       <div class="weekhead"><h2>주간 통독</h2><div class="wknav"><button id="hPrev" aria-label="지난주">‹</button><span id="hLabel"></span><button id="hNext" aria-label="다음 주">›</button></div></div>
@@ -396,6 +417,13 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       <p>개인정보 보호 책임: 코디엠교회<br>이메일: <a href="mailto:kodiam@kodiam.org">kodiam@kodiam.org</a></p>
       <p class="small">시행일: 2026년 10월 28일</p>
     </article>
+  </section>
+
+  <!-- 절기 묵상 화면 -->
+  <section class="view" id="season" aria-label="절기 묵상">
+    <div class="top"><button class="back" data-go="home">‹ 처음으로</button>
+      <div class="wknav"><button id="ssPrev" aria-label="이전 날">‹</button><span id="ssLabel"></span><button id="ssNext" aria-label="다음 날">›</button></div></div>
+    <div id="ssBody"></div>
   </section>
 
   <!-- 하루 화면 -->
@@ -525,6 +553,7 @@ const YEAR=today.getFullYear();
 const SHEET_PUB="https://docs.google.com/spreadsheets/d/e/2PACX-1vRxQ-krT-lR5itCHyvLBu1DvGkP8yt6-zjMRHsnawc57ULwxrKrXDQYr4Qm-1gagMKlN2IuXOqS8J2y/pub";
 const TABS={
   tongdok:"1792190309",   /* 통독 탭 gid */
+  season:"1752169905",              /* 절기 탭 gid (절기 묵상집: date/season/day/part/title/...) */
   years:{                 /* 연도 탭 gid, 해마다 한 줄 추가 */
     2026:"901116385",
     2027:"979740216"
@@ -606,6 +635,13 @@ function setRead(k,v){META.read[k]={v:!!v,t:Date.now()};v?read.add(k):read.delet
 
 function loadAnswer(k){return localStorage.getItem(`kodiam-ans-${k}`)||"";}
 if(!META.word){META.word={};saveMeta()}
+if(!META.ss){META.ss={};saveMeta()}
+function loadSS(k){try{return JSON.parse(localStorage.getItem(`kodiam-ss-${k}`))||{}}catch(e){return{}}}
+function saveSS(k,o){
+  const v={copy:o.copy||"",prayer:o.prayer||"",amen:o.amen||0,mission:!!o.mission};
+  if(v.copy.trim()||v.prayer.trim()||v.amen||v.mission)localStorage.setItem(`kodiam-ss-${k}`,JSON.stringify(v));else localStorage.removeItem(`kodiam-ss-${k}`);
+  META.ss[k]={t:Date.now()};saveMeta();pushToCloud();
+}
 function loadWord(k){try{return JSON.parse(localStorage.getItem(`kodiam-word-${k}`))||{ref:"",text:""}}catch(e){return{ref:"",text:""}}}
 function saveWord(k,w){
   if((w.ref||"").trim()||(w.text||"").trim())localStorage.setItem(`kodiam-word-${k}`,JSON.stringify({ref:w.ref||"",text:w.text||""}));
@@ -728,7 +764,7 @@ document.getElementById("hPrev").onclick=()=>{homeBase=shift(homeBase,-7);render
 document.getElementById("hNext").onclick=()=>{homeBase=shift(homeBase,7);renderStrip()};
 document.getElementById("dPrev").onclick=()=>{dayBase=shift(dayBase,-7);renderDayStrip()};
 document.getElementById("dNext").onclick=()=>{dayBase=shift(dayBase,7);renderDayStrip()};
-function renderHome(){greet();progress();renderToday();renderStrip();refreshCounts()}
+function renderHome(){greet();progress();renderToday();renderSeasonCard();renderStrip();refreshCounts()}
 
 /* ---------- 하루 화면 ---------- */
 function openDay(k){
@@ -736,17 +772,17 @@ function openDay(k){
   dayBase=new Date(d);curDay=k;renderDayStrip();
   if(!p&&d.getDay()!==0){
     body.innerHTML=`<div class="dhead"><small>${fmt(d)}</small><h1>통독 자료 준비 중</h1></div>
-      <div class="sunday"><p>이 날의 통독 가이드가 아직 등록되지 않았어요.</p></div>`;
+      <div class="sunday"><p>이 날의 통독 가이드가 아직 등록되지 않았어요.</p></div>${ssLink(k)}`;
     show("day");return;
   }
   if(!p){
-    body.innerHTML=`<div class="dhead"><small>${fmt(d)}</small><h1>쉼의 날</h1></div>
+    body.innerHTML=`<div class="dhead"><small>${fmt(d)}</small><h1>쉼의 날</h1></div>${ssLink(k)}
       <div class="sunday"><h2>한 주의 질문과 답</h2>
       <p>이번 주 성도들이 남긴 질문에 하임레시피 특별판으로 답해요.</p>
       ${ytLink("하임레시피 특별판 듣기",SPECIAL[k])}</div>`;
   }else{
     const done=read.has(k);
-    body.innerHTML=`<div class="dhead"><small>${fmt(d)}${p.no?` · 통독 ${p.no}일차`:""}</small><h1>${p.label}</h1></div>
+    body.innerHTML=`<div class="dhead"><small>${fmt(d)}${p.no?` · 통독 ${p.no}일차`:""}</small><h1>${p.label}</h1></div>${ssLink(k)}
       ${isSpecial(p.track)?`<div class="trackbox"><b>${esc(p.track)}</b><span>오늘의 하임레시피는 ${esc(p.track_bible||"특별 묵상 본문")}을 따라가요</span></div>`:""}
       <div class="cardwrap" id="cardwrap">
         <div class="cards" id="cards" aria-label="티저 카드 4장"></div>
@@ -911,8 +947,8 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-fs]");if(!
 applyFS();
 
 /* ---------- 버전과 새로워진 점 ---------- */
-const APP_VERSION="2026.10.28-4";
-const FIXES=[{v:"2026.10.28-3",items:["소개 페이지와 개인정보 처리방침을 다듬었어요."]},{v:"2026.10.28-2",items:["묵상 카드에서 낱말이 줄 끝에서 쪼개지지 않게 했어요.","컴퓨터에서는 묵상 카드가 바로 다운로드 폴더에 저장돼요."]}];
+const APP_VERSION="2026.10.29-2";
+const FIXES=[{v:"2026.10.29-2",items:["절기 묵상 자료(기쁨의 50일)를 연결했어요."]},{v:"2026.10.29",items:["절기 묵상을 앱에서 함께할 수 있도록 준비했어요."]},{v:"2026.10.28-5",items:["‘새로워진 점’이 최신 버전부터 차례로 보이게 했어요."]},{v:"2026.10.28-3",items:["소개 페이지와 개인정보 처리방침을 다듬었어요."]},{v:"2026.10.28-2",items:["묵상 카드에서 낱말이 줄 끝에서 쪼개지지 않게 했어요.","컴퓨터에서는 묵상 카드가 바로 다운로드 폴더에 저장돼요."]}];
 const CHANGES=[
   {v:"2026.10.28-4",items:[
     "‘오늘 나에게 주신 말씀’ 칸이 생겼어요. 성경 앱에서 구절을 복사해 붙여 넣으세요.",
@@ -926,7 +962,8 @@ const CHANGES=[
 ];
 function showVersion(){const b=document.getElementById("verBtn");if(b)b.textContent="버전 "+APP_VERSION}
 function openNews(all){
-  const list=all?[...FIXES,...CHANGES]:CHANGES.slice(0,1);
+  const vkey=v=>{const [d,n]=v.split("-");return d.replace(/\./g,"")*100+(+n||0)};
+  const list=all?[...FIXES,...CHANGES].sort((a,b)=>vkey(b.v)-vkey(a.v)):CHANGES.slice(0,1);
   document.getElementById("newsTitle").textContent=all?"새로워진 점":"새로워졌어요";
   document.getElementById("newsBody").innerHTML=list.map(c=>`<div class="newsv"><b>버전 ${c.v}</b><ul>${c.items.map(i=>`<li>${esc(i)}</li>`).join("")}</ul></div>`).join("");
   document.getElementById("newsSheet").classList.add("on");
@@ -974,6 +1011,70 @@ async function markReader(k,v){
   const ref=db.collection("daily").doc(k).collection("readers").doc(auth.currentUser.uid);
   try{if(v)await ref.set({t:firebase.firestore.FieldValue.serverTimestamp()});else await ref.delete()}catch(e){}
   delete CNT[k];refreshCounts();
+}
+
+/* ---------- 절기 묵상 (예: 부활절 ‘기쁨의 50일’) ---------- */
+const SEASON={};let SSCUR=null;
+function buildSeason(rows){
+  Object.keys(SEASON).forEach(k=>delete SEASON[k]);
+  rows.forEach(r=>{const dk=dateKeyOf(r.date,YEAR);if(dk&&r.title)SEASON[dk]=r});
+}
+const ssKeys=name=>Object.keys(SEASON).filter(k=>SEASON[k].season===name).sort();
+function ssLink(k){const r=SEASON[k];if(!r)return"";
+  return `<button class="sslink" data-season="${k}"><b>${esc(r.season)} · ${+r.day}일째</b><span>${esc(r.title)} ›</span></button>`}
+function renderSeasonCard(){
+  const box=document.getElementById("seasonBox");if(!box)return;
+  const k=key(today),r=SEASON[k];if(!r){box.hidden=true;return}
+  const st=loadSS(k),keys=ssKeys(r.season),done=keys.filter(x=>loadSS(x).amen).length;
+  box.hidden=false;
+  box.innerHTML=`<div class="date">${esc(r.season)} · ${+r.day}일째${r.part?` · ${esc(r.part)}`:""}</div>
+    <div class="passage">${esc(r.title)}</div>
+    <p class="together" style="margin:-8px 0 16px">${esc(r.seed_ref)}</p>
+    <div class="row"><button class="btn btn-light" data-season="${k}">오늘 묵상하기</button>${st.amen?`<span class="amenok">아멘 ✓</span>`:""}</div>
+    <p class="cnt">${keys.length}일 중 ${done}일 기도를 마쳤어요</p>`;
+}
+const paras=t=>String(t||"").split(/\n\s*\n/).filter(x=>x.trim()).map(x=>`<p>${esc(x.trim())}</p>`).join("");
+function openSeason(k){
+  const r=SEASON[k];if(!r)return;SSCUR=k;
+  const d=fromKey(k),st=loadSS(k),keys=ssKeys(r.season),i=keys.indexOf(k);
+  document.getElementById("ssLabel").textContent=`${+r.day}일째`;
+  document.getElementById("ssPrev").disabled=i<=0;document.getElementById("ssNext").disabled=i>=keys.length-1;
+  document.getElementById("ssPrev").onclick=()=>{if(i>0)openSeason(keys[i-1])};
+  document.getElementById("ssNext").onclick=()=>{if(i<keys.length-1)openSeason(keys[i+1])};
+  document.getElementById("ssBody").innerHTML=`
+    <div class="dhead"><small>${fmt(d)} · ${esc(r.season)} ${+r.day}일째${r.part?` · ${esc(r.part)}`:""}</small><h1>${esc(r.title)}</h1></div>
+    ${r.intro?`<div class="ssintro">${paras(r.intro)}</div>`:""}
+    <article class="ssdoc">
+      <div class="ghead"><span class="sstag">씨뿌리기</span>
+        <div class="fsctl" role="group" aria-label="글씨 크기"><button data-fs="-1" aria-label="글씨 작게" class="sm">가</button><span class="fslab" aria-live="polite"></span><button data-fs="1" aria-label="글씨 크게" class="lg">가</button></div></div>
+      <blockquote class="ssverse">${esc(r.seed)}<cite>${esc(r.seed_ref)}</cite></blockquote>
+      <span class="sstag">거름주기</span>
+      <div class="ssnote">${paras(r.note)}</div>
+      <span class="sstag">물주기</span>
+      <p class="sswater">${esc(r.water)}</p>
+      <p class="ssguide">${esc(r.water_guide)}</p>
+      <textarea id="ssCopy" rows="3" placeholder="말씀을 천천히 옮겨 적어 보세요">${esc(st.copy||"")}</textarea>
+      <div class="answer-tools"><span></span><span class="anbtns"><button type="button" id="ssCopyCard">말씀 카드 만들기</button></span></div>
+      <span class="sstag">햇살 비추기</span>
+      <p class="ssguide">오늘의 묵상을 마음에 담고, 나만의 기도를 적어 보세요.</p>
+      <textarea id="ssPrayer" rows="5" placeholder="주님, …">${esc(st.prayer||"")}</textarea>
+      <button class="check amen ${st.amen?"done":""}" id="ssAmen">${st.amen?"아멘 ✓ (다시 누르면 취소)":"아멘"}</button>
+      <span class="sstag">꽃 피우기</span>
+      <p class="ssmt">${esc(r.mission_title)}</p>
+      <p class="ssguide">${esc(r.mission)}</p>
+      <button class="ssmission ${st.mission?"on":""}" id="ssMission">${st.mission?"오늘 실천했어요 ✓":"오늘 실천했어요"}</button>
+    </article>`;
+  const cp=document.getElementById("ssCopy"),pr=document.getElementById("ssPrayer");
+  let tm=null;const cur=()=>({...loadSS(k),copy:cp.value,prayer:pr.value});
+  const store=()=>{clearTimeout(tm);tm=setTimeout(()=>saveSS(k,cur()),700)};
+  cp.addEventListener("input",store);pr.addEventListener("input",store);
+  document.getElementById("ssAmen").onclick=()=>{const o=cur();
+    if(!o.amen&&!o.prayer.trim()){pr.focus();pr.placeholder="기도를 한 줄이라도 적고 ‘아멘’을 눌러 주세요";return}
+    o.amen=o.amen?0:Date.now();saveSS(k,o);openSeason(k)};
+  document.getElementById("ssMission").onclick=()=>{const o=cur();o.mission=!o.mission;saveSS(k,o);openSeason(k)};
+  document.getElementById("ssCopyCard").onclick=()=>{const t=(cp.value.trim()||r.water.replace(/^“|”$/g,"")).trim();
+    openMed(k,{label:r.seed_ref,think:""},t,{mode:"word",ref:r.seed_ref})};
+  applyFS();show("season");
 }
 
 /* ---------- 오늘 나에게 주신 말씀 ---------- */
@@ -1239,6 +1340,13 @@ async function syncFromCloud(uid) {
         META.ans[k]={t:c.t||0};
       }else if(l&&(!c||l.t>c.t))localNewer=true;
     });
+    const cS = data.ssMap || {};
+    if(!data.ssMap&&Object.keys(META.ss).length)localNewer=true;
+    new Set([...Object.keys(cS),...Object.keys(META.ss)]).forEach(k=>{
+      const c=cS[k],l=META.ss[k];
+      if(c&&(!l||c.t>l.t)){const {t,...o}=c;if((o.copy||"").trim()||(o.prayer||"").trim()||o.amen||o.mission)localStorage.setItem(`kodiam-ss-${k}`,JSON.stringify(o));else localStorage.removeItem(`kodiam-ss-${k}`);META.ss[k]={t:c.t||0}}
+      else if(l&&(!c||l.t>c.t))localNewer=true;
+    });
     const cW = data.wordMap || {};
     if(!data.wordMap&&Object.keys(META.word).length)localNewer=true;
     new Set([...Object.keys(cW),...Object.keys(META.word)]).forEach(k=>{
@@ -1263,6 +1371,7 @@ function refreshViews(){
   if(on("home"))renderHome();
   else if(on("record"))renderCal();
   else if(on("day")){const a=document.activeElement;if(!(a&&["myAnswer","wordText","wordRef"].includes(a.id)))openDay(curDay)}
+  else if(on("season")){const a=document.activeElement;if(!(a&&["ssCopy","ssPrayer"].includes(a.id))&&SSCUR)openSeason(SSCUR)}
 }
 
 // 로컬 -> 클라우드 백업: 입력이 멈추고 2초 뒤 한 번만
@@ -1275,6 +1384,8 @@ async function pushNow() {
   try {
     const ansMap = {};
     Object.entries(META.ans).forEach(([k,m])=>{ansMap[k]={text:loadAnswer(k),t:m.t||0}});
+    const ssMap = {};
+    Object.entries(META.ss).forEach(([k,m])=>{ssMap[k]={...loadSS(k),t:m.t||0}});
     const wordMap = {};
     Object.entries(META.word).forEach(([k,m])=>{const w=loadWord(k);wordMap[k]={ref:w.ref,text:w.text,t:m.t||0}});
     const FV = firebase.firestore.FieldValue;
@@ -1284,6 +1395,7 @@ async function pushNow() {
       readMap: META.read,
       ansMap: ansMap,
       wordMap: wordMap,
+      ssMap: ssMap,
       readList: FV.delete(),
       answers: FV.delete(),
       updatedAt: FV.serverTimestamp()
@@ -1302,6 +1414,8 @@ document.addEventListener("visibilitychange",()=>{
 function show(id){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.id===id));window.scrollTo(0,0);if(id==="home")renderHome();if(id==="record")renderCal()}
 
 document.addEventListener("click", e => {
+  const ssb = e.target.closest("[data-season]");
+  if (ssb) { openSeason(ssb.dataset.season); return; }
   if (e.target.closest("#openLogin")) { loginMsg(""); document.getElementById("loginSheet").classList.add("on"); return; }
   if (e.target.closest("#loginClose")) { document.getElementById("loginSheet").classList.remove("on"); return; }
   const lg = e.target.closest("[data-login]");
@@ -1359,6 +1473,7 @@ if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js?v="+APP_
 /* 구글 시트 실시간 페치 */
 const getCSV=u=>fetch(u+(u.includes("?")?"&":"?")+"t="+Date.now(),{cache:"no-store"}).then(r=>{if(!r.ok)throw 0;return r.text()}).then(parseCSV);
 const tabURL=g=>`${SHEET_PUB}?gid=${g}&single=true&output=csv`;
+if(TABS.season){getCSV(tabURL(TABS.season)).then(rows=>{buildSeason(rows);refreshViews()}).catch(()=>{})}
 if(TABS.tongdok){
   const ys=Object.entries(TABS.years).filter(([,g])=>g!=="");
   Promise.all([getCSV(tabURL(TABS.tongdok)),...ys.map(([,g])=>getCSV(tabURL(g)).catch(()=>[]))])

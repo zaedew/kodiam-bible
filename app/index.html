@@ -275,6 +275,35 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .today.ssn.hasbn{padding-top:0;overflow:hidden}
 .ssbanner.card{width:calc(100% + 44px);margin:0 -22px 18px}
 .ssbanner.head{border-radius:18px;margin:0 0 16px}
+.ssbtn{display:block;width:100%;padding:0;border:0;background:none;cursor:pointer}
+.cover{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;background:rgba(20,24,30,.82);padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px))}
+.cover.on{display:flex}
+.cvin{display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;max-width:460px;max-height:100%}
+.cvin img{display:block;max-width:100%;max-height:calc(100vh - 250px);border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,.35);object-fit:contain}
+.cover.on .cvin img{animation:cvup .5s ease-out}
+@keyframes cvup{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){.cover.on .cvin img{animation:none}}
+.libbtn{margin:18px 0 0}
+.libhead{margin:4px 0 6px}.libhead h1{font-family:"Gowun Batang",serif;font-size:26px;color:var(--deep);margin:0 0 6px}
+.libhead p{margin:0;color:var(--soft);font-size:14px;line-height:1.7}
+.shelf{margin:26px 0 0}.shelf h2{font-family:"Gowun Batang",serif;font-size:18px;color:var(--ink);margin:0 0 12px}
+.srow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px 14px;padding:0 4px 16px;border-bottom:7px solid #CDB89A;box-shadow:0 6px 8px -6px rgba(80,60,30,.35);border-radius:0 0 3px 3px}
+.book{display:flex;flex-direction:column;align-items:stretch;text-align:left;gap:3px;background:none;border:0;padding:0;cursor:pointer;color:var(--ink);font:inherit}
+.bcov{display:block;aspect-ratio:1/1.414;border-radius:3px 6px 6px 3px;overflow:hidden;background:#E0E0E1;box-shadow:inset 3px 0 0 rgba(0,0,0,.12),2px 4px 10px rgba(0,0,0,.18);margin-bottom:6px;transition:transform .2s}
+.bcov img{display:block;width:100%;height:100%;object-fit:cover}
+.book:active .bcov{transform:translateY(-4px)}
+.book:focus-visible{outline:3px solid var(--blue);outline-offset:4px;border-radius:6px}
+.byear{font-size:12px;color:var(--soft)}
+.btitle{font-family:"Gowun Batang",serif;font-size:14px;line-height:1.45;font-weight:700;word-break:keep-all}
+.bstate{font-size:12px;color:var(--soft)}.bstate.live{color:#1F6F8B;font-weight:700}.bstate.prep{opacity:.75}
+.bph{display:flex;flex-direction:column;justify-content:space-between;width:100%;height:100%;background:var(--deep);color:#fff;padding:12px 10px;font-family:"Gowun Batang",serif;font-size:14px;line-height:1.4;word-break:keep-all}
+.bph small{font-family:"Noto Sans KR",sans-serif;font-size:11px;opacity:.8}
+.bph.big{width:min(300px,70vw);aspect-ratio:1/1.414;height:auto;border-radius:16px;padding:28px 24px;font-size:26px;box-shadow:0 10px 40px rgba(0,0,0,.35)}
+.bph.big small{font-size:14px}
+.bph[hidden],.cvin img[hidden],.cvgo[hidden],.cvnote[hidden]{display:none}
+.cvnote{margin:0;color:#e8edf3;font-size:14px;line-height:1.7;text-align:center;white-space:pre-line;word-break:keep-all}
+.cvgo{width:100%;background:#E07050;color:#fff;border-radius:14px;padding:15px;font-size:16px}
+.cvclose{background:none;border:0;color:#e8edf3;font-size:14px;padding:4px 10px;text-decoration:underline;text-underline-offset:3px}
 .ssintro{background:var(--sky);border-radius:16px;padding:14px 16px;margin:0 0 14px;font-size:calc(15px * var(--gs,1));line-height:1.8;color:var(--ink)}
 .ssintro p{margin:0 0 8px}.ssintro p:last-child{margin:0}
 .ssdoc{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px 20px 24px}
@@ -290,6 +319,41 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .check.amen{margin-top:12px;font-family:"Gowun Batang",serif;font-size:19px;letter-spacing:.1em}
 .ssmission{margin-top:4px;width:100%;border:1.5px solid #1F6F8B;background:none;color:#1F6F8B;border-radius:14px;padding:12px;font-weight:700}
 .ssmission.on{background:#E3F1F6}
+
+.jbtn{display:flex;flex-direction:column;gap:4px;width:100%;text-align:left;margin-top:14px;background:var(--surface);border:1.5px solid var(--blue);border-radius:16px;padding:14px 16px}
+.jbtn b{color:var(--deep);font-size:16px}.jbtn span{font-size:13px;color:var(--soft);line-height:1.6}
+.jtools{margin:0 0 16px}.jtools .btn{width:100%;background:var(--blue);color:#fff;border-radius:14px;padding:14px}
+.jtools p{font-size:12px;color:var(--soft);line-height:1.6;margin:10px 0 0}
+.jempty{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:24px;text-align:center;color:var(--soft);line-height:1.8}
+#jBody{font-family:"Gowun Batang",serif;color:var(--ink)}
+.jcover{background:var(--deep);color:#fff;border-radius:20px;padding:44px 28px;text-align:center;margin-bottom:18px}
+.jcover h1{font-size:30px;line-height:1.4;margin:10px 0 14px}
+.jc1{font-family:"Noto Sans KR",sans-serif;font-size:13px;letter-spacing:.2em;opacity:.8;margin:0}
+.jc2{font-size:18px;margin:0 0 18px}.jc3{font-family:"Noto Sans KR",sans-serif;font-size:12px;opacity:.85;margin:0 0 18px}
+.jc4{font-size:14px;opacity:.9;margin:0;line-height:1.7}
+.jmonth{font-size:22px;margin:26px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.jday{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin:0 0 12px;line-height:1.85}
+.jday header{display:flex;flex-direction:column;gap:2px;margin-bottom:8px;font-family:"Noto Sans KR",sans-serif}
+.jday header b{font-size:14px;color:var(--deep)}.jday header span{font-size:13px;color:var(--soft)}
+.jl{display:block;font-family:"Noto Sans KR",sans-serif;font-size:12px;font-weight:700;color:var(--blue);margin:10px 0 2px}
+.jday blockquote{margin:0;padding:4px 0 4px 12px;border-left:3px solid var(--sky);font-weight:700}
+.jday cite{display:block;font-style:normal;font-weight:400;font-family:"Noto Sans KR",sans-serif;font-size:12px;color:var(--soft);text-align:right}
+.jday p{margin:0}.jq{font-family:"Noto Sans KR",sans-serif;font-size:13px;color:var(--soft);margin:6px 0 0!important}
+.jamen{display:inline-block;margin-left:8px;font-weight:700;color:var(--blue)}
+.jend{text-align:center;font-family:"Noto Sans KR",sans-serif;font-size:12px;color:var(--soft);margin:24px 0}
+@media print{
+  @page{size:A5;margin:14mm 12mm}
+  body{background:#fff!important}
+  body *{visibility:hidden}
+  #journal,#journal *{visibility:visible}
+  #journal{position:absolute;left:0;top:0;width:100%}
+  .app{max-width:none;padding:0}
+  .noprint{display:none!important}
+  #jBody{color:#111}
+  .jcover{background:#163F73!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;min-height:170mm;display:flex;flex-direction:column;justify-content:center;break-after:page;border-radius:0}
+  .jday{border:0;border-bottom:1px solid #ddd;border-radius:0;padding:10px 0;break-inside:avoid;background:none}
+  .jmonth{break-after:avoid}
+}
 
 /* 기록 화면 */
 .calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
@@ -375,6 +439,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       <div class="strip" id="strip"></div>
     </div>
 
+    <button class="jbtn libbtn" data-go="library"><b>절기 묵상 서재</b><span>사순절, 부활절, 대림절마다 함께 걸어온 묵상집을 모아 두었어요 ›</span></button>
+
     <div class="install" id="install" hidden>
       <p id="installText">홈 화면에 추가하면 앱처럼 바로 열 수 있어요.</p>
       <button class="btn" id="installBtn" hidden>홈 화면에 추가</button>
@@ -387,12 +453,25 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   </section>
 
 
+  <!-- 나의 묵상 기록 -->
+  <section class="view" id="journal" aria-label="나의 묵상 기록">
+    <div class="top noprint"><button class="back" data-go="record">‹ 내 기록으로</button>
+      <div class="wknav"><button id="jPrev" aria-label="이전 해">‹</button><span id="jYear"></span><button id="jNext" aria-label="다음 해">›</button></div></div>
+    <div class="jtools noprint">
+      <button class="btn" id="jPrint">인쇄하기 · PDF로 저장</button>
+      <p id="jHint"></p>
+    </div>
+    <div id="jBody"></div>
+  </section>
+
   <!-- 소개 -->
   <section class="view" id="about" aria-label="코디엠 통독 소개">
     <div class="top"><button class="back" data-go="home">‹ 처음으로</button></div>
     <article class="doc">
       <h1>코디엠 성경통독</h1>
       <p>우리의 생명이 더욱더 온전해지기 위해서는 말씀이 채워져야 해요. 그래서 코디엠교회는 2019년부터 해마다 온 교회가 함께 성경을 처음부터 끝까지 읽고 있어요. 일요일은 쉬고 하루 3~5장씩, 1년이면 성경 66권을 모두 읽게 돼요. 매일 새벽 5시 30분에는 그날의 말씀을 함께 나누는 하임레시피가 올라와요. 사순절이나 대림절 같은 절기, 또는 특별 묵상 기간에는 하임레시피로 절기 묵상이 올라오기도 해요.</p>
+      <p>절기마다 펴내 온 묵상집은 ‘절기 묵상 서재’에 모아 두었어요. 지난 절기에 함께 붙들었던 말씀을 언제든 다시 펼쳐 볼 수 있어요.</p>
+      <button class="jbtn" data-go="library" style="margin:0 0 16px"><b>절기 묵상 서재 둘러보기</b><span>코디엠이 걸어온 묵상의 길 ›</span></button>
       <p>언제 시작하셔도 괜찮아요. 지난 날은 그대로 두고, 오늘 본문부터 함께 읽어요. 교회에 다니지 않으셔도, 로그인하지 않으셔도 누구나 함께할 수 있어요.</p>
       <h2>코디엠이 무엇인가요?</h2>
       <p>‘코디엠(KODIAM)’은 ‘코리안 디아스포라 미니스트리(Korean Diaspora Ministry)’의 약자로, 본질적으로는 생명 사역을 뜻합니다.</p>
@@ -433,6 +512,13 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     <div id="ssBody"></div>
   </section>
 
+  <!-- 절기 묵상 서재 -->
+  <section class="view" id="library" aria-label="절기 묵상 서재">
+    <div class="top"><button class="back" data-go="home">‹ 처음으로</button></div>
+    <header class="libhead"><h1>절기 묵상 서재</h1><p>코디엠이 절기마다 함께 걸어온 묵상집이에요. 표지를 누르면 펼쳐 볼 수 있어요.</p></header>
+    <div id="libBody"></div>
+  </section>
+
   <!-- 하루 화면 -->
   <section class="view" id="day" aria-label="오늘 분량">
     <div class="daybar">
@@ -458,6 +544,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
       <span><i style="background:var(--rest)"></i>쉬는 날</span>
     </div>
     <div class="recsum" id="recsum"></div>
+    <button class="jbtn" data-go="journal"><b>나의 묵상 기록 모아 보기</b><span>한 해 동안 적은 묵상과 말씀, 기도를 한 권으로 엮어 인쇄하거나 PDF로 간직할 수 있어요 ›</span></button>
     <div class="listhead"><h2 id="listTitle">이 달의 통독표</h2><button id="listAll">올해 전체 보기</button></div>
     <div class="plist" id="plist"></div>
   </section>
@@ -495,6 +582,16 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     <p class="small">기록 삭제를 원하시면 <a href="mailto:kodiam@kodiam.org">kodiam@kodiam.org</a>로 알려 주세요.</p>
     <button class="btn" id="acctClose">확인</button>
     <button class="btn lgc" id="logoutBtn">로그아웃</button>
+  </div>
+</div>
+
+<div class="cover" id="coverSheet" role="dialog" aria-label="절기 묵상집 표지">
+  <div class="cvin">
+    <img id="coverImg" alt="">
+    <div class="bph big" id="coverPh" hidden></div>
+    <p class="cvnote" id="coverNote" hidden></p>
+    <button class="btn cvgo" id="coverGo">시작하기</button>
+    <button class="cvclose" id="coverClose">닫기</button>
   </div>
 </div>
 
@@ -954,9 +1051,13 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-fs]");if(!
 applyFS();
 
 /* ---------- 버전과 새로워진 점 ---------- */
-const APP_VERSION="2026.10.29-3";
-const FIXES=[{v:"2026.10.29-3",items:["절기 묵상 바로가기에 절기 디자인을 넣었어요."]},{v:"2026.10.29-2",items:["절기 묵상 자료(기쁨의 50일)를 연결했어요."]},{v:"2026.10.29",items:["절기 묵상을 앱에서 함께할 수 있도록 준비했어요."]},{v:"2026.10.28-5",items:["‘새로워진 점’이 최신 버전부터 차례로 보이게 했어요."]},{v:"2026.10.28-3",items:["소개 페이지와 개인정보 처리방침을 다듬었어요."]},{v:"2026.10.28-2",items:["묵상 카드에서 낱말이 줄 끝에서 쪼개지지 않게 했어요.","컴퓨터에서는 묵상 카드가 바로 다운로드 폴더에 저장돼요."]}];
+const APP_VERSION="2026.10.30";
+const FIXES=[{v:"2026.10.29-4",items:["절기 묵상을 처음 열면 묵상집 표지가 펼쳐져요."]},{v:"2026.10.29-3",items:["절기 묵상 바로가기에 절기 디자인을 넣었어요."]},{v:"2026.10.29-2",items:["절기 묵상 자료(기쁨의 50일)를 연결했어요."]},{v:"2026.10.29",items:["절기 묵상을 앱에서 함께할 수 있도록 준비했어요."]},{v:"2026.10.28-5",items:["‘새로워진 점’이 최신 버전부터 차례로 보이게 했어요."]},{v:"2026.10.28-3",items:["소개 페이지와 개인정보 처리방침을 다듬었어요."]},{v:"2026.10.28-2",items:["묵상 카드에서 낱말이 줄 끝에서 쪼개지지 않게 했어요.","컴퓨터에서는 묵상 카드가 바로 다운로드 폴더에 저장돼요."]}];
 const CHANGES=[
+  {v:"2026.10.30",items:[
+    "‘절기 묵상 서재’가 생겼어요. 사순절, 부활절, 대림절마다 함께 걸어온 묵상집을 한곳에서 다시 펼쳐 볼 수 있어요.",
+    "한 해 동안 적은 묵상과 말씀, 기도를 ‘나의 묵상 기록’ 한 권으로 모아 인쇄하거나 PDF로 간직할 수 있어요. (통독표와 내 기록 보기 → 나의 묵상 기록 모아 보기)"
+  ]},
   {v:"2026.10.28-4",items:[
     "‘오늘 나에게 주신 말씀’ 칸이 생겼어요. 성경 앱에서 구절을 복사해 붙여 넣으세요.",
     "붙여 넣은 말씀을 말씀 카드로 만들어 나눌 수 있어요."
@@ -1020,8 +1121,57 @@ async function markReader(k,v){
   delete CNT[k];refreshCounts();
 }
 
+/* ---------- 나의 묵상 기록 (한 해를 한 권으로) ---------- */
+let JYEAR=YEAR;
+function jCollect(y){
+  const days=new Set(),pre=`${y}-`;
+  for(let i=0;i<localStorage.length;i++){const n=localStorage.key(i)||"";const m=n.match(/^kodiam-(ans|word|ss)-(\d{4}-\d{2}-\d{2})$/);if(m&&m[2].startsWith(pre))days.add(m[2])}
+  return [...days].sort().map(k=>{
+    const ans=loadAnswer(k).trim(),w=loadWord(k),ss=loadSS(k),p=PLAN[k],r=SEASON[k];
+    return{k,ans,word:(w.text||"").trim()?w:null,ss:((ss.copy||"").trim()||(ss.prayer||"").trim())?ss:null,p,r};
+  }).filter(e=>e.ans||e.word||e.ss);
+}
+function jYears(){const ys=new Set();for(let i=0;i<localStorage.length;i++){const m=(localStorage.key(i)||"").match(/^kodiam-(ans|word|ss)-(\d{4})-/);if(m)ys.add(+m[2])}ys.add(YEAR);return[...ys].sort()}
+const jp=t=>esc(t).replace(/\n/g,"<br>");
+function renderJournal(){
+  const ys=jYears();if(!ys.includes(JYEAR))JYEAR=ys[ys.length-1];
+  document.getElementById("jYear").textContent=`${JYEAR}년`;
+  document.getElementById("jPrev").disabled=ys.indexOf(JYEAR)<=0;document.getElementById("jNext").disabled=ys.indexOf(JYEAR)>=ys.length-1;
+  const es=jCollect(JYEAR),body=document.getElementById("jBody");
+  const nRead=[...read].filter(k=>k.startsWith(JYEAR+"-")).length,nAns=es.filter(e=>e.ans).length,nWord=es.filter(e=>e.word).length,nPr=es.filter(e=>e.ss&&(e.ss.prayer||"").trim()).length;
+  const who=appUser?appUser.name:name;
+  const ui=!(auth&&auth.currentUser);
+  document.getElementById("jHint").innerHTML=(ui?"이 휴대폰에 남은 기록만 모였어요. 기록 백업으로 로그인하면 다른 기기에 적은 기록까지 함께 모을 수 있어요.<br>":"")+
+    "휴대폰에서는 인쇄 화면이 열리면 프린터 대신 ‘PDF로 저장’을 고르세요. 카카오톡 안에서는 인쇄가 안 될 수 있으니 크롬이나 사파리로 열어 주세요.";
+  if(!es.length){body.innerHTML=`<div class="jempty">${JYEAR}년에 적은 묵상이 아직 없어요.<br>통독 가이드의 질문에 묵상을 적거나, 오늘 나에게 주신 말씀을 남기면 이곳에 차곡차곡 모여요.</div>`;return}
+  let h=`<article class="jcover">
+    <p class="jc1">코디엠 성경통독</p>
+    <h1>${JYEAR}<br>나의 묵상 기록</h1>
+    ${who?`<p class="jc2">${esc(who)}</p>`:""}
+    <p class="jc3">통독한 날 ${nRead}일 · 묵상 ${nAns}편 · 내게 주신 말씀 ${nWord}구절 · 기도 ${nPr}편</p>
+    <p class="jc4">우리의 생명이 더욱더 온전해지기 위해서는 말씀이 채워져야 해요.</p>
+  </article>`;
+  let lastM=-1;
+  es.forEach(e=>{
+    const d=fromKey(e.k);
+    if(d.getMonth()!==lastM){lastM=d.getMonth();h+=`<h2 class="jmonth">${d.getMonth()+1}월</h2>`}
+    h+=`<section class="jday"><header><b>${d.getMonth()+1}월 ${d.getDate()}일 ${WD[d.getDay()]}요일</b>${e.p?`<span>${esc(e.p.label)}${e.p.title?` · ${esc(e.p.title)}`:""}</span>`:""}</header>`;
+    if(e.word)h+=`<div class="jword"><span class="jl">오늘 나에게 주신 말씀</span><blockquote>${jp(e.word.text)}${e.word.ref?`<cite>${esc(e.word.ref)}</cite>`:""}</blockquote></div>`;
+    if(e.ans)h+=`<div class="jans">${e.p&&e.p.think?`<p class="jq">${esc(e.p.think)}</p>`:""}<span class="jl">나의 묵상</span><p>${jp(e.ans)}</p></div>`;
+    if(e.ss){const r=e.r;h+=`<div class="jss"><span class="jl">${r?`${esc(r.season)} ${+r.day}일째 · ${esc(r.title)}`:"절기 묵상"}</span>
+      ${(e.ss.copy||"").trim()?`<blockquote>${jp(e.ss.copy)}${r&&r.seed_ref?`<cite>${esc(r.seed_ref)}</cite>`:""}</blockquote>`:""}
+      ${(e.ss.prayer||"").trim()?`<p class="jpr">${jp(e.ss.prayer)}${e.ss.amen?`<span class="jamen">아멘</span>`:""}</p>`:""}</div>`}
+    h+=`</section>`;
+  });
+  h+=`<p class="jend">bible.kodiam.org/app · 코디엠교회</p>`;
+  body.innerHTML=h;
+}
+document.getElementById("jPrev").onclick=()=>{const ys=jYears(),i=ys.indexOf(JYEAR);if(i>0){JYEAR=ys[i-1];renderJournal()}};
+document.getElementById("jNext").onclick=()=>{const ys=jYears(),i=ys.indexOf(JYEAR);if(i<ys.length-1){JYEAR=ys[i+1];renderJournal()}};
+document.getElementById("jPrint").onclick=()=>{const t=document.title;document.title=`${JYEAR} 나의 묵상 기록`;window.print();setTimeout(()=>document.title=t,1000)};
+
 /* ---------- 절기 묵상 (예: 부활절 ‘기쁨의 50일’) ---------- */
-const SEASON={};let SSCUR=null;
+const SEASON={};let SSCUR=null,SSBACK="home";
 function buildSeason(rows){
   Object.keys(SEASON).forEach(k=>delete SEASON[k]);
   rows.forEach(r=>{const dk=dateKeyOf(r.date,YEAR);if(dk&&r.title)SEASON[dk]=r});
@@ -1044,15 +1194,29 @@ function renderSeasonCard(){
     <p class="cnt">${keys.length}일 중 ${done}일 기도를 마쳤어요</p>`;
 }
 const paras=t=>String(t||"").split(/\n\s*\n/).filter(x=>x.trim()).map(x=>`<p>${esc(x.trim())}</p>`).join("");
-function openSeason(k){
-  const r=SEASON[k];if(!r)return;SSCUR=k;
+const ssCov=r=>(r&&/^[\w.-]+\.(jpg|jpeg|png|webp)$/i.test(r.cover||""))?`season/${r.cover}`:"";
+function showCover(r,go){
+  const c=ssCov(r);if(!c){go&&go();return}
+  const img=document.getElementById("coverImg");img.src=c;img.alt=`${r.season} 표지`;img.hidden=false;
+  document.getElementById("coverPh").hidden=true;document.getElementById("coverNote").hidden=true;document.getElementById("coverGo").hidden=false;
+  document.getElementById("coverGo").textContent=go?`${r.season} 시작하기`:"묵상으로 돌아가기";
+  const sh=document.getElementById("coverSheet");sh.classList.add("on");
+  const close=()=>{sh.classList.remove("on");save(`kodiam-cover-${r.season}`,true)};
+  document.getElementById("coverGo").onclick=()=>{close();go&&go()};
+  document.getElementById("coverClose").onclick=close;
+}
+function openSeason(k,skipCover){
+  const r=SEASON[k];if(!r)return;
+  if(!skipCover&&ssCov(r)&&!load(`kodiam-cover-${r.season}`,false)){showCover(r,()=>openSeason(k,true));return}
+  SSCUR=k;
+  const bk=document.querySelector("#season .back");bk.dataset.go=SSBACK;bk.textContent=SSBACK==="library"?"‹ 서재로":"‹ 처음으로";
   const d=fromKey(k),st=loadSS(k),keys=ssKeys(r.season),i=keys.indexOf(k);
   document.getElementById("ssLabel").textContent=`${+r.day}일째`;
   document.getElementById("ssPrev").disabled=i<=0;document.getElementById("ssNext").disabled=i>=keys.length-1;
   document.getElementById("ssPrev").onclick=()=>{if(i>0)openSeason(keys[i-1])};
   document.getElementById("ssNext").onclick=()=>{if(i<keys.length-1)openSeason(keys[i+1])};
   document.getElementById("ssBody").innerHTML=`
-    ${ssBanner(r,"head")}
+    ${ssCov(r)?`<button class="ssbtn" id="ssCoverBtn" aria-label="${esc(r.season)} 표지 보기">${ssBanner(r,"head")}</button>`:ssBanner(r,"head")}
     <div class="dhead"><small>${fmt(d)} · ${esc(r.season)} ${+r.day}일째${r.part?` · ${esc(r.part)}`:""}</small><h1>${esc(r.title)}</h1></div>
     ${r.intro?`<div class="ssintro">${paras(r.intro)}</div>`:""}
     <article class="ssdoc">
@@ -1085,7 +1249,65 @@ function openSeason(k){
   document.getElementById("ssMission").onclick=()=>{const o=cur();o.mission=!o.mission;saveSS(k,o);openSeason(k)};
   document.getElementById("ssCopyCard").onclick=()=>{const t=(cp.value.trim()||r.water.replace(/^“|”$/g,"")).trim();
     openMed(k,{label:r.seed_ref,think:""},t,{mode:"word",ref:r.seed_ref})};
+  const cb=document.getElementById("ssCoverBtn");if(cb)cb.onclick=()=>showCover(r,null);
   applyFS();show("season");
+}
+
+/* ---------- 절기 묵상 서재 ----------
+   새 묵상집을 꽂을 때: 표지 그림을 season 폴더에 ○○-cover.jpg, ○○-thumb.jpg로 넣고 아래 목록에 한 줄 더함.
+   season 칸이 절기 탭의 season 이름과 같고 날짜의 해가 같으면, 그 묵상집을 앱 안에서 펼쳐 읽을 수 있음. */
+const LIBRARY=[
+  {group:"사순절",year:2023,title:"희망으로의 여정",cover:"lent2023"},
+  {group:"사순절",year:2025,title:"예수, 온전한 하나님의 사람",cover:"lent2025"},
+  {group:"사순절",year:2026,title:"생명이 되어 흩어지다",cover:"lent2026"},
+  {group:"부활절",year:2026,title:"흩어진 자리에서 꽃이 피다",sub:"기쁨의 50일",cover:"easter2026",season:"기쁨의 50일"},
+  {group:"대림절과 성탄절",year:2023,title:"우리에게 오신 생명",cover:"advent2023"},
+  {group:"대림절과 성탄절",year:2025,title:"두려움에서 설렘으로",cover:"advent2025"},
+  {group:"대림절과 성탄절",year:2026,title:"두려움에서 설렘으로",sub:"개정증보판",cover:"advent2026",season:"두려움에서 설렘으로",start:"2026-11-29"}
+];
+const bookKeys=b=>b.season?Object.keys(SEASON).filter(k=>SEASON[k].season===b.season&&k.startsWith(b.year+"-")).sort():[];
+const md=k=>{const d=fromKey(k);return `${d.getMonth()+1}월 ${d.getDate()}일`};
+function bookState(b){
+  const ks=bookKeys(b),tk=key(today);
+  if(ks.length){const done=ks.filter(x=>loadSS(x).amen).length;
+    if(ks.includes(tk))return{ks,done,txt:`오늘 ${+SEASON[tk].day}일째`,live:true};
+    if(tk<ks[0])return{ks,done,txt:`${md(ks[0])} 시작`};
+    return{ks,done,txt:done?`${ks.length}일 중 ${done}일 기도`:`${ks.length}일 묵상`}}
+  if(b.start&&key(today)<b.start)return{ks,done:0,txt:`${md(b.start)} 시작`,soon:true};
+  return{ks,done:0,txt:"준비 중",prep:true};
+}
+const bookPh=(b,cls)=>`<span class="bph ${cls||""}"><span>${esc(b.title)}</span><small>${b.year}</small></span>`;
+function renderLibrary(){
+  const box=document.getElementById("libBody");if(!box)return;
+  const groups=[...new Set(LIBRARY.map(b=>b.group))];
+  box.innerHTML=groups.map(g=>`<section class="shelf"><h2>${esc(g)}</h2><div class="srow">${
+    LIBRARY.map((b,i)=>[b,i]).filter(([b])=>b.group===g).map(([b,i])=>{const st=bookState(b);
+      return `<button class="book" data-book="${i}" aria-label="${b.year} ${esc(g)} 묵상집 ${esc(b.title)}, ${st.txt}">
+        <span class="bcov">${b.cover?`<img src="season/${b.cover}-thumb.jpg" alt="" loading="lazy">`:bookPh(b)}</span>
+        <span class="byear">${b.year}${b.sub?` ${esc(b.sub)}`:""}</span>
+        <span class="btitle">${esc(b.title)}</span>
+        <span class="bstate ${st.live?"live":st.prep?"prep":""}">${st.txt}</span></button>`}).join("")
+  }</div></section>`).join("");
+}
+function openBook(i){
+  const b=LIBRARY[i];if(!b)return;const st=bookState(b),ks=st.ks;
+  const img=document.getElementById("coverImg"),ph=document.getElementById("coverPh"),note=document.getElementById("coverNote"),go=document.getElementById("coverGo");
+  if(b.cover){img.src=`season/${b.cover}-cover.jpg`;img.alt=`${b.title} 표지`;img.hidden=false;ph.hidden=true}
+  else{img.hidden=true;ph.innerHTML=`<span>${esc(b.title)}</span><small>${b.year}</small>`;ph.hidden=false}
+  let msg=`${b.year} ${b.group} 묵상집 「${b.title}」${b.sub?` ${b.sub}`:""}`,start=null,label="";
+  if(ks.length){const tk=key(today);
+    if(ks.includes(tk)){start=tk;label="오늘 묵상하기"}
+    else{const nx=ks.find(x=>!loadSS(x).amen);
+      if(st.done&&nx){start=nx;label=`${+SEASON[nx].day}일째부터 이어서 걷기`}
+      else{start=ks[0];label="1일째부터 펼쳐 보기"}}}
+  else if(st.soon)msg+=`\n${md(b.start)}부터 함께 걸어요. 그날 첫 화면에 묵상이 열려요.`;
+  else msg+="\n앱에서 함께 읽을 수 있도록 준비하고 있어요.";
+  note.textContent=msg;note.hidden=false;
+  go.hidden=!start;go.textContent=label;
+  const sh=document.getElementById("coverSheet");sh.classList.add("on");
+  const close=()=>{sh.classList.remove("on");if(b.season)save(`kodiam-cover-${b.season}`,true)};
+  go.onclick=()=>{close();if(start){SSBACK="library";openSeason(start,true)}};
+  document.getElementById("coverClose").onclick=()=>sh.classList.remove("on");
 }
 
 /* ---------- 오늘 나에게 주신 말씀 ---------- */
@@ -1381,6 +1603,7 @@ function refreshViews(){
   const on=id=>document.getElementById(id).classList.contains("on");
   if(on("home"))renderHome();
   else if(on("record"))renderCal();
+  else if(on("library"))renderLibrary();
   else if(on("day")){const a=document.activeElement;if(!(a&&["myAnswer","wordText","wordRef"].includes(a.id)))openDay(curDay)}
   else if(on("season")){const a=document.activeElement;if(!(a&&["ssCopy","ssPrayer"].includes(a.id))&&SSCUR)openSeason(SSCUR)}
 }
@@ -1422,11 +1645,13 @@ document.addEventListener("visibilitychange",()=>{
 });
 
 /* ---------- 공통 인터랙션 ---------- */
-function show(id){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.id===id));window.scrollTo(0,0);if(id==="home")renderHome();if(id==="record")renderCal()}
+function show(id){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.id===id));window.scrollTo(0,0);if(id==="home")renderHome();if(id==="record")renderCal();if(id==="journal")renderJournal();if(id==="library")renderLibrary()}
 
 document.addEventListener("click", e => {
   const ssb = e.target.closest("[data-season]");
-  if (ssb) { openSeason(ssb.dataset.season); return; }
+  if (ssb) { SSBACK="home"; openSeason(ssb.dataset.season); return; }
+  const bkb = e.target.closest("[data-book]");
+  if (bkb) { openBook(+bkb.dataset.book); return; }
   if (e.target.closest("#openLogin")) { loginMsg(""); document.getElementById("loginSheet").classList.add("on"); return; }
   if (e.target.closest("#loginClose")) { document.getElementById("loginSheet").classList.remove("on"); return; }
   const lg = e.target.closest("[data-login]");

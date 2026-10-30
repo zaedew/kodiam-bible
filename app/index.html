@@ -284,6 +284,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 @keyframes cvup{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion: reduce){.cover.on .cvin img{animation:none}}
 .libbtn{margin:18px 0 0}
+.ssyt{margin:0 0 14px}.ssyt .yt{margin:0}
 .libhead{margin:4px 0 6px}.libhead h1{font-family:"Gowun Batang",serif;font-size:26px;color:var(--deep);margin:0 0 6px}
 .libhead p{margin:0;color:var(--soft);font-size:14px;line-height:1.7}
 .shelf{margin:26px 0 0}.shelf h2{font-family:"Gowun Batang",serif;font-size:18px;color:var(--ink);margin:0 0 12px}
@@ -1055,6 +1056,7 @@ const APP_VERSION="2026.10.30";
 const FIXES=[{v:"2026.10.29-4",items:["절기 묵상을 처음 열면 묵상집 표지가 펼쳐져요."]},{v:"2026.10.29-3",items:["절기 묵상 바로가기에 절기 디자인을 넣었어요."]},{v:"2026.10.29-2",items:["절기 묵상 자료(기쁨의 50일)를 연결했어요."]},{v:"2026.10.29",items:["절기 묵상을 앱에서 함께할 수 있도록 준비했어요."]},{v:"2026.10.28-5",items:["‘새로워진 점’이 최신 버전부터 차례로 보이게 했어요."]},{v:"2026.10.28-3",items:["소개 페이지와 개인정보 처리방침을 다듬었어요."]},{v:"2026.10.28-2",items:["묵상 카드에서 낱말이 줄 끝에서 쪼개지지 않게 했어요.","컴퓨터에서는 묵상 카드가 바로 다운로드 폴더에 저장돼요."]}];
 const CHANGES=[
   {v:"2026.10.30",items:[
+    "절기 묵상에 그날의 하임레시피 방송이 연결됐어요. (기쁨의 50일)",
     "‘절기 묵상 서재’가 생겼어요. 사순절, 부활절, 대림절마다 함께 걸어온 묵상집을 한곳에서 다시 펼쳐 볼 수 있어요.",
     "한 해 동안 적은 묵상과 말씀, 기도를 ‘나의 묵상 기록’ 한 권으로 모아 인쇄하거나 PDF로 간직할 수 있어요. (통독표와 내 기록 보기 → 나의 묵상 기록 모아 보기)"
   ]},
@@ -1219,6 +1221,7 @@ function openSeason(k,skipCover){
     ${ssCov(r)?`<button class="ssbtn" id="ssCoverBtn" aria-label="${esc(r.season)} 표지 보기">${ssBanner(r,"head")}</button>`:ssBanner(r,"head")}
     <div class="dhead"><small>${fmt(d)} · ${esc(r.season)} ${+r.day}일째${r.part?` · ${esc(r.part)}`:""}</small><h1>${esc(r.title)}</h1></div>
     ${r.intro?`<div class="ssintro">${paras(r.intro)}</div>`:""}
+    ${/^https:\/\/(www\.|m\.)?(youtube\.com|youtu\.be)\//.test(r.youtube||"")?`<div class="ssyt">${ytLink("하임레시피로 함께 듣기",r.youtube)}</div>`:""}
     <article class="ssdoc">
       <div class="ghead"><span class="sstag">씨뿌리기</span>
         <div class="fsctl" role="group" aria-label="글씨 크기"><button data-fs="-1" aria-label="글씨 작게" class="sm">가</button><span class="fslab" aria-live="polite"></span><button data-fs="1" aria-label="글씨 크게" class="lg">가</button></div></div>

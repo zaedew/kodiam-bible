@@ -1055,10 +1055,10 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-fs]");if(!
 applyFS();
 
 /* ---------- 버전과 새로워진 점 ---------- */
-const APP_VERSION="2026.10.30";
+const APP_VERSION="2026.10.31";
 const FIXES=[{v:"2026.10.29-4",items:["절기 묵상을 처음 열면 묵상집 표지가 펼쳐져요."]},{v:"2026.10.29-3",items:["절기 묵상 바로가기에 절기 디자인을 넣었어요."]},{v:"2026.10.29-2",items:["절기 묵상 자료(기쁨의 50일)를 연결했어요."]},{v:"2026.10.29",items:["절기 묵상을 앱에서 함께할 수 있도록 준비했어요."]},{v:"2026.10.28-5",items:["‘새로워진 점’이 최신 버전부터 차례로 보이게 했어요."]},{v:"2026.10.28-3",items:["소개 페이지와 개인정보 처리방침을 다듬었어요."]},{v:"2026.10.28-2",items:["묵상 카드에서 낱말이 줄 끝에서 쪼개지지 않게 했어요.","컴퓨터에서는 묵상 카드가 바로 다운로드 폴더에 저장돼요."]}];
 const CHANGES=[
-  {v:"2026.10.30",items:[
+  {v:"2026.10.31",items:[
     "절기 묵상에 그날의 하임레시피 방송이 연결됐어요. (기쁨의 50일)",
     "11월 29일부터 성탄절 묵상 「두려움에서 설렘으로」를 함께 걸어요.",
     "‘절기 묵상 서재’가 생겼어요. 사순절, 부활절, 대림절마다 함께 걸어온 묵상집을 한곳에서 다시 펼쳐 볼 수 있어요.",
@@ -1274,8 +1274,8 @@ const LIBRARY=[
   {group:"사순절",year:2025,title:"예수, 온전한 하나님의 사람",cover:"lent2025"},
   {group:"사순절",year:2026,title:"생명이 되어 흩어지다",cover:"lent2026"},
   {group:"부활절",year:2026,title:"흩어진 자리에서 꽃이 피다",sub:"기쁨의 50일",cover:"easter2026",season:"기쁨의 50일"},
-  {group:"대림절과 성탄절",year:2023,title:"우리에게 오신 생명",cover:"advent2023"},
-  {group:"대림절과 성탄절",year:2025,title:"두려움에서 설렘으로",cover:"advent2025"},
+  {group:"대림절과 성탄절",year:2023,title:"우리에게 오신 생명",cover:"advent2023",season:"우리에게 오신 생명"},
+  {group:"대림절과 성탄절",year:2025,title:"두려움에서 설렘으로",cover:"advent2025",memo:"2025년 함께 걸었던 대림절 묵상의 시간을 2026년 더 다듬어 다시 걷습니다.",next:6,nextLabel:"2026 개정증보판 펼치기"},
   {group:"대림절과 성탄절",year:2026,title:"두려움에서 설렘으로",sub:"개정증보판",cover:"advent2026",season:"두려움에서 설렘으로",start:"2026-11-29"}
 ];
 const bookKeys=b=>b.season?Object.keys(SEASON).filter(k=>SEASON[k].season===b.season&&k.startsWith(b.year+"-")).sort():[];
@@ -1286,6 +1286,7 @@ function bookState(b){
     if(ks.includes(tk))return{ks,done,txt:`오늘 ${+SEASON[tk].day}일째`,live:true};
     if(tk<ks[0])return{ks,done,txt:`${md(ks[0])} 시작`};
     return{ks,done,txt:done?`${ks.length}일 중 ${done}일 기도`:`${ks.length}일 묵상`}}
+  if(b.memo)return{ks,done:0,txt:"함께 걸었어요"};
   if(b.start&&key(today)<b.start)return{ks,done:0,txt:`${md(b.start)} 시작`,soon:true};
   return{ks,done:0,txt:"준비 중",prep:true};
 }
@@ -1313,13 +1314,15 @@ function openBook(i){
     else{const nx=ks.find(x=>!loadSS(x).amen);
       if(st.done&&nx){start=nx;label=`${+SEASON[nx].day}일째부터 이어서 걷기`}
       else{start=ks[0];label="1일째부터 펼쳐 보기"}}}
+  else if(b.memo)msg+=`\n\n${b.memo}`;
   else if(st.soon)msg+=`\n${md(b.start)}부터 함께 걸어요. 그날 첫 화면에 묵상이 열려요.`;
   else msg+="\n앱에서 함께 읽을 수 있도록 준비하고 있어요.";
   note.textContent=msg;note.hidden=false;
-  go.hidden=!start;go.textContent=label;
+  const nb=b.memo&&LIBRARY[b.next];
+  go.hidden=!start&&!nb;go.textContent=start?label:(nb?b.nextLabel:"");
   const sh=document.getElementById("coverSheet");sh.classList.add("on");
   const close=()=>{sh.classList.remove("on");if(b.season)save(`kodiam-cover-${b.season}`,true)};
-  go.onclick=()=>{close();if(start){SSBACK="library";openSeason(start,true)}};
+  go.onclick=()=>{if(!start&&nb){openBook(b.next);return}close();if(start){SSBACK="library";openSeason(start,true)}};
   document.getElementById("coverClose").onclick=()=>sh.classList.remove("on");
 }
 

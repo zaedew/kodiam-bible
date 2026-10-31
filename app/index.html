@@ -312,6 +312,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .ssdoc .ghead .sstag{margin:0}
 .ssverse{margin:0;font-family:"Gowun Batang",serif;font-size:calc(18px * var(--gs,1));line-height:1.85}
 .ssverse.lines{white-space:pre-line;font-size:calc(17px * var(--gs,1))}
+.ssq.after{margin-top:22px}
 .ssq{font-family:"Gowun Batang",serif;font-weight:700;font-size:calc(17px * var(--gs,1));line-height:1.7;margin:0 0 10px;word-break:keep-all}
 .ssprline{font-family:"Gowun Batang",serif;font-weight:700;font-size:calc(18px * var(--gs,1));line-height:1.75;margin:0 0 6px;word-break:keep-all}
 .ssverse cite{display:block;margin-top:8px;font-style:normal;font-family:"Noto Sans KR",sans-serif;font-size:14px;color:var(--soft);text-align:right}
@@ -746,8 +747,8 @@ if(!META.word){META.word={};saveMeta()}
 if(!META.ss){META.ss={};saveMeta()}
 function loadSS(k){try{return JSON.parse(localStorage.getItem(`kodiam-ss-${k}`))||{}}catch(e){return{}}}
 function saveSS(k,o){
-  const v={copy:o.copy||"",prayer:o.prayer||"",amen:o.amen||0,mission:!!o.mission};
-  if(v.copy.trim()||v.prayer.trim()||v.amen||v.mission)localStorage.setItem(`kodiam-ss-${k}`,JSON.stringify(v));else localStorage.removeItem(`kodiam-ss-${k}`);
+  const v={copy:o.copy||"",medi:o.medi||"",prayer:o.prayer||"",amen:o.amen||0,mission:!!o.mission};
+  if(v.copy.trim()||v.medi.trim()||v.prayer.trim()||v.amen||v.mission)localStorage.setItem(`kodiam-ss-${k}`,JSON.stringify(v));else localStorage.removeItem(`kodiam-ss-${k}`);
   META.ss[k]={t:Date.now()};saveMeta();pushToCloud();
 }
 function loadWord(k){try{return JSON.parse(localStorage.getItem(`kodiam-word-${k}`))||{ref:"",text:""}}catch(e){return{ref:"",text:""}}}
@@ -1134,7 +1135,7 @@ function jCollect(y){
   for(let i=0;i<localStorage.length;i++){const n=localStorage.key(i)||"";const m=n.match(/^kodiam-(ans|word|ss)-(\d{4}-\d{2}-\d{2})$/);if(m&&m[2].startsWith(pre))days.add(m[2])}
   return [...days].sort().map(k=>{
     const ans=loadAnswer(k).trim(),w=loadWord(k),ss=loadSS(k),p=PLAN[k],r=SEASON[k];
-    return{k,ans,word:(w.text||"").trim()?w:null,ss:((ss.copy||"").trim()||(ss.prayer||"").trim())?ss:null,p,r};
+    return{k,ans,word:(w.text||"").trim()?w:null,ss:((ss.copy||"").trim()||(ss.medi||"").trim()||(ss.prayer||"").trim())?ss:null,p,r};
   }).filter(e=>e.ans||e.word||e.ss);
 }
 function jYears(){const ys=new Set();for(let i=0;i<localStorage.length;i++){const m=(localStorage.key(i)||"").match(/^kodiam-(ans|word|ss)-(\d{4})-/);if(m)ys.add(+m[2])}ys.add(YEAR);return[...ys].sort()}
@@ -1165,7 +1166,8 @@ function renderJournal(){
     if(e.word)h+=`<div class="jword"><span class="jl">오늘 나에게 주신 말씀</span><blockquote>${jp(e.word.text)}${e.word.ref?`<cite>${esc(e.word.ref)}</cite>`:""}</blockquote></div>`;
     if(e.ans)h+=`<div class="jans">${e.p&&e.p.think?`<p class="jq">${esc(e.p.think)}</p>`:""}<span class="jl">나의 묵상</span><p>${jp(e.ans)}</p></div>`;
     if(e.ss){const r=e.r;h+=`<div class="jss"><span class="jl">${r?`${esc(r.season)} ${+r.day}일째 · ${esc(r.title)}`:"절기 묵상"}</span>
-      ${(e.ss.copy||"").trim()?(r&&r.question?`<p class="jq">${esc(r.question)}</p><p>${jp(e.ss.copy)}</p>`:`<blockquote>${jp(e.ss.copy)}${r&&r.seed_ref?`<cite>${esc(r.seed_ref)}</cite>`:""}</blockquote>`):""}
+      ${(e.ss.copy||"").trim()?(r&&r.question&&!(r.water||"").trim()?`<p class="jq">${esc(r.question)}</p><p>${jp(e.ss.copy)}</p>`:`<blockquote>${jp(e.ss.copy)}${r&&r.seed_ref?`<cite>${esc(r.seed_ref)}</cite>`:""}</blockquote>`):""}
+      ${(e.ss.medi||"").trim()?`${r&&r.question?`<p class="jq">${esc(r.question)}</p>`:""}<p>${jp(e.ss.medi)}</p>`:""}
       ${(e.ss.prayer||"").trim()?`<p class="jpr">${jp(e.ss.prayer)}${e.ss.amen?`<span class="jamen">아멘</span>`:""}</p>`:""}</div>`}
     h+=`</section>`;
   });
@@ -1232,14 +1234,13 @@ function openSeason(k,skipCover){
       <blockquote class="ssverse${/\n/.test(r.seed||"")?" lines":""}">${esc(r.seed)}<cite>${esc(r.seed_ref)}</cite></blockquote>
       <span class="sstag">거름주기</span>
       <div class="ssnote">${paras(r.note)}</div>
-      ${(r.water||"").trim()?`<span class="sstag">물주기</span>
-      <p class="sswater">${esc(r.water)}</p>
+      ${(r.water||"").trim()||(r.question||"").trim()?`<span class="sstag">물주기</span>`:""}
+      ${(r.water||"").trim()?`<p class="sswater">${esc(r.water)}</p>
       <p class="ssguide">${esc(r.water_guide)}</p>
       <textarea id="ssCopy" rows="3" placeholder="말씀을 천천히 옮겨 적어 보세요">${esc(st.copy||"")}</textarea>
       <div class="answer-tools"><span></span><span class="anbtns"><button type="button" id="ssCopyCard">말씀 카드 만들기</button></span></div>`:""}
-      ${(r.question||"").trim()?`<span class="sstag">물주기</span>
-      <p class="ssq">${esc(r.question)}</p>
-      <textarea id="ssCopy" rows="4" placeholder="떠오르는 생각을 적어 보세요">${esc(st.copy||"")}</textarea>`:""}
+      ${(r.question||"").trim()?`<p class="ssq${(r.water||"").trim()?" after":""}">${esc(r.question)}</p>
+      <textarea id="${(r.water||"").trim()?"ssMedi":"ssCopy"}" rows="4" placeholder="${(r.water||"").trim()?"나의 묵상을 적어 보세요":"떠오르는 생각을 적어 보세요"}">${esc(((r.water||"").trim()?st.medi:st.copy)||"")}</textarea>`:""}
       ${(r.prayer_line||"").trim()?`<span class="sstag">햇살 비추기</span>
       <p class="ssprline">${esc(r.prayer_line)}</p>
       <p class="ssguide">한 줄 기도에 내 마음을 더하고 싶다면 적어 보세요. 비워 두어도 괜찮아요.</p>
@@ -1252,10 +1253,10 @@ function openSeason(k,skipCover){
       <p class="ssguide">${esc(r.mission)}</p>
       <button class="ssmission ${st.mission?"on":""}" id="ssMission">${st.mission?"오늘 실천했어요 ✓":"오늘 실천했어요"}</button>`:""}
     </article>`;
-  const cp=document.getElementById("ssCopy"),pr=document.getElementById("ssPrayer");
-  let tm=null;const cur=()=>({...loadSS(k),copy:cp?cp.value:(loadSS(k).copy||""),prayer:pr.value});
+  const cp=document.getElementById("ssCopy"),pr=document.getElementById("ssPrayer"),me=document.getElementById("ssMedi");
+  let tm=null;const cur=()=>({...loadSS(k),copy:cp?cp.value:(loadSS(k).copy||""),medi:me?me.value:(loadSS(k).medi||""),prayer:pr.value});
   const store=()=>{clearTimeout(tm);tm=setTimeout(()=>saveSS(k,cur()),700)};
-  if(cp)cp.addEventListener("input",store);pr.addEventListener("input",store);
+  if(cp)cp.addEventListener("input",store);if(me)me.addEventListener("input",store);pr.addEventListener("input",store);
   document.getElementById("ssAmen").onclick=()=>{const o=cur();
     if(!o.amen&&!o.prayer.trim()&&!(r.prayer_line||"").trim()){pr.focus();pr.placeholder="기도를 한 줄이라도 적고 ‘아멘’을 눌러 주세요";return}
     o.amen=o.amen?0:Date.now();saveSS(k,o);openSeason(k)};
@@ -1272,7 +1273,7 @@ function openSeason(k,skipCover){
 const LIBRARY=[
   {group:"사순절",year:2023,title:"희망으로의 여정",cover:"lent2023"},
   {group:"사순절",year:2025,title:"예수, 온전한 하나님의 사람",cover:"lent2025"},
-  {group:"사순절",year:2026,title:"생명이 되어 흩어지다",cover:"lent2026"},
+  {group:"사순절",year:2026,title:"생명이 되어 흩어지다",cover:"lent2026",season:"생명이 되어 흩어지다"},
   {group:"부활절",year:2026,title:"흩어진 자리에서 꽃이 피다",sub:"기쁨의 50일",cover:"easter2026",season:"기쁨의 50일"},
   {group:"대림절과 성탄절",year:2023,title:"우리에게 오신 생명",cover:"advent2023",season:"우리에게 오신 생명"},
   {group:"대림절과 성탄절",year:2025,title:"두려움에서 설렘으로",cover:"advent2025",memo:"2025년 함께 걸었던 대림절 묵상의 시간을 2026년 더 다듬어 다시 걷습니다.",next:6,nextLabel:"2026 개정증보판 펼치기"},
@@ -1593,7 +1594,7 @@ async function syncFromCloud(uid) {
     if(!data.ssMap&&Object.keys(META.ss).length)localNewer=true;
     new Set([...Object.keys(cS),...Object.keys(META.ss)]).forEach(k=>{
       const c=cS[k],l=META.ss[k];
-      if(c&&(!l||c.t>l.t)){const {t,...o}=c;if((o.copy||"").trim()||(o.prayer||"").trim()||o.amen||o.mission)localStorage.setItem(`kodiam-ss-${k}`,JSON.stringify(o));else localStorage.removeItem(`kodiam-ss-${k}`);META.ss[k]={t:c.t||0}}
+      if(c&&(!l||c.t>l.t)){const {t,...o}=c;if((o.copy||"").trim()||(o.medi||"").trim()||(o.prayer||"").trim()||o.amen||o.mission)localStorage.setItem(`kodiam-ss-${k}`,JSON.stringify(o));else localStorage.removeItem(`kodiam-ss-${k}`);META.ss[k]={t:c.t||0}}
       else if(l&&(!c||l.t>c.t))localNewer=true;
     });
     const cW = data.wordMap || {};

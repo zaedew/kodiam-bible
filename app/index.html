@@ -284,6 +284,10 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 @keyframes cvup{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion: reduce){.cover.on .cvin img{animation:none}}
 .libbtn{margin:18px 0 0}
+.bsk{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
+.bsk a{display:inline-flex;align-items:baseline;gap:8px;padding:9px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--blue);font-weight:700;font-size:14px;text-decoration:none}
+.bsk a span{font-weight:400;font-size:12px;color:var(--soft)}
+.dhead .bsk{margin:12px 0 8px}
 .ssyt{margin:0 0 14px}.ssyt .yt{margin:0}
 .libhead{margin:4px 0 6px}.libhead h1{font-family:"Gowun Batang",serif;font-size:26px;color:var(--deep);margin:0 0 6px}
 .libhead p{margin:0;color:var(--soft);font-size:14px;line-height:1.7}
@@ -846,7 +850,8 @@ function renderToday(){
   const done=read.has(k);
   box.innerHTML=`<div class="date">${fmt(today)} 오늘의 본문</div>
     <div class="passage">${p.label}</div>
-    <p class="together" style="margin:-8px 0 16px">${esc(p.title)}</p>
+    <p class="together" style="margin:-8px 0 12px">${esc(p.title)}</p>
+    ${bibleLinkHTML(p.bible)}
     <div class="row">
       <button class="btn btn-light" data-open="${k}">오늘 분량 보기</button>
       <button class="btn btn-ghost ${done?"done":""}" data-toggle="${k}">${done?"읽었어요 ✓":"다 읽었어요"}</button>
@@ -891,7 +896,7 @@ function openDay(k){
       ${ytLink("하임레시피 특별판 듣기",SPECIAL[k])}</div>`;
   }else{
     const done=read.has(k);
-    body.innerHTML=`<div class="dhead"><small>${fmt(d)}${p.no?` · 통독 ${p.no}일차`:""}</small><h1>${p.label}</h1></div>${ssLink(k)}
+    body.innerHTML=`<div class="dhead"><small>${fmt(d)}${p.no?` · 통독 ${p.no}일차`:""}</small><h1>${p.label}</h1>${bibleLinkHTML(p.bible)}</div>${ssLink(k)}
       ${isSpecial(p.track)?`<div class="trackbox"><b>${esc(p.track)}</b><span>오늘의 하임레시피는 ${esc(p.track_bible||"특별 묵상 본문")}을 따라가요</span></div>`:""}
       <div class="cardwrap" id="cardwrap">
         <div class="cards" id="cards" aria-label="티저 카드 4장"></div>
@@ -1056,9 +1061,13 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-fs]");if(!
 applyFS();
 
 /* ---------- 버전과 새로워진 점 ---------- */
-const APP_VERSION="2026.10.31";
+const APP_VERSION="2026.11.08";
 const FIXES=[{v:"2026.10.29-4",items:["절기 묵상을 처음 열면 묵상집 표지가 펼쳐져요."]},{v:"2026.10.29-3",items:["절기 묵상 바로가기에 절기 디자인을 넣었어요."]},{v:"2026.10.29-2",items:["절기 묵상 자료(기쁨의 50일)를 연결했어요."]},{v:"2026.10.29",items:["절기 묵상을 앱에서 함께할 수 있도록 준비했어요."]},{v:"2026.10.28-5",items:["‘새로워진 점’이 최신 버전부터 차례로 보이게 했어요."]},{v:"2026.10.28-3",items:["소개 페이지와 개인정보 처리방침을 다듬었어요."]},{v:"2026.10.28-2",items:["묵상 카드에서 낱말이 줄 끝에서 쪼개지지 않게 했어요.","컴퓨터에서는 묵상 카드가 바로 다운로드 폴더에 저장돼요."]}];
 const CHANGES=[
+  {v:"2026.11.08",items:[
+    "오늘 본문 아래 ‘성경 본문 읽기’를 누르면 대한성서공회 개역개정 성경이 그 장으로 바로 열려요.",
+    "2026 사순절 「생명이 되어 흩어지다」와 2023 대림절 「우리에게 오신 생명」을 서재에서 펼쳐 읽을 수 있어요."
+  ]},
   {v:"2026.10.31",items:[
     "절기 묵상에 그날의 하임레시피 방송이 연결됐어요. (기쁨의 50일)",
     "11월 29일부터 성탄절 묵상 「두려움에서 설렘으로」를 함께 걸어요.",
@@ -1266,6 +1275,17 @@ function openSeason(k,skipCover){
   const cb=document.getElementById("ssCoverBtn");if(cb)cb.onclick=()=>showCover(r,null);
   applyFS();show("season");
 }
+
+/* ---------- 대한성서공회 개역개정 본문으로 연결 ----------
+   앱은 성경 본문을 싣지 않고, 그날 통독 범위의 첫 장을 대한성서공회 사이트에서 열어 줌 */
+const BSK={"창세기": "gen", "출애굽기": "exo", "레위기": "lev", "민수기": "num", "신명기": "deu", "여호수아": "jos", "사사기": "jdg", "룻기": "rut", "사무엘상": "1sa", "사무엘하": "2sa", "열왕기상": "1ki", "열왕기하": "2ki", "역대상": "1ch", "역대하": "2ch", "에스라": "ezr", "느헤미야": "neh", "에스더": "est", "욥기": "job", "시편": "psa", "잠언": "pro", "전도서": "ecc", "아가": "sng", "이사야": "isa", "예레미야": "jer", "예레미야애가": "lam", "에스겔": "ezk", "다니엘": "dan", "호세아": "hos", "요엘": "jol", "아모스": "amo", "오바댜": "oba", "요나": "jnh", "미가": "mic", "나훔": "nam", "하박국": "hab", "스바냐": "zep", "학개": "hag", "스가랴": "zec", "말라기": "mal", "마태복음": "mat", "마가복음": "mrk", "누가복음": "luk", "요한복음": "jhn", "사도행전": "act", "로마서": "rom", "고린도전서": "1co", "고린도후서": "2co", "갈라디아서": "gal", "에베소서": "eph", "빌립보서": "php", "골로새서": "col", "데살로니가전서": "1th", "데살로니가후서": "2th", "디모데전서": "1ti", "디모데후서": "2ti", "디도서": "tit", "빌레몬서": "phm", "히브리서": "heb", "야고보서": "jas", "베드로전서": "1pe", "베드로후서": "2pe", "요한일서": "1jn", "요한이서": "2jn", "요한삼서": "3jn", "유다서": "jud", "요한계시록": "rev"};
+function bibleLinks(t){const out=[];let bk="";
+  String(t||"").split(/[,·]/).forEach(seg=>{const m=seg.trim().match(/^([가-힣]+)?\s*(\d+)/);if(!m)return;
+    if(m[1]&&BSK[m[1]])bk=m[1];if(!bk)return;
+    out.push({label:`${bk} ${m[2]}${bk==="시편"?"편":"장"}`,url:`https://www.bskorea.or.kr/bible/korbibReadpage.php?version=GAE&book=${BSK[bk]}&chap=${m[2]}`})});
+  return out}
+function bibleLinkHTML(t){const l=bibleLinks(t);if(!l.length)return"";
+  return `<div class="bsk">${l.map((x,i)=>`<a href="${x.url}" target="_blank" rel="noopener">${l.length>1?`${esc(x.label)}부터 읽기`:"성경 본문 읽기"} <span>개역개정 · 대한성서공회 ↗</span></a>`).join("")}</div>`}
 
 /* ---------- 절기 묵상 서재 ----------
    새 묵상집을 꽂을 때: 표지 그림을 season 폴더에 ○○-cover.jpg, ○○-thumb.jpg로 넣고 아래 목록에 한 줄 더함.
